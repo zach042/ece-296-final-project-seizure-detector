@@ -4,6 +4,7 @@ import time
 import array
 import math
 import goertzel
+#import oled
 
 #math constants
 PI = math.pi
@@ -58,7 +59,7 @@ def measure(buffer_index):
     x_buffer[buffer_index] = ax - gx
     y_buffer[buffer_index] = ay - gy
     z_buffer[buffer_index] = az - gz
-    
+        
     end_t = time.ticks_us()
     while time.ticks_diff(end_t, start_t) < 20000:
         end_t = time.ticks_us()
@@ -73,7 +74,26 @@ def fill_initial_buffers():
     print("buffers filled")
     print(time.ticks_us() - s)
     
+    
+    
+def get_buffer_snap(circular_buf, write_index, size):
+    snap = array.array('f', [0.0] * size)
+    for i in range(size):
+        snap[i] = circular_buf[(write_index + i) % size]
+    return snap
 
+
+    
+def analyze(buffer):
+    power = goertzel.multi_frequency_power(buffer, 3, 6, SAMPLE_RATE, 500)
+    
+    # Check if buffer is actually filling with different values
+    unique_values = len(set(buffer))  # Should be close to 500 when full
+    
+    # Check if buffer_index is actually changing
+    print(f"Power: {power:.1f} | Unique samples: {unique_values} | Index: {buffer_index}")
+
+    
 
 
 initialized = False
@@ -84,9 +104,15 @@ while True:
         
     if buffer_index == 500:
         buffer_index = 0
-        analyze()
         
     measure(buffer_index)
+    
+    if buffer_index % 25 == 0:
+        analyze(get_buffer_snap(x_buffer, buffer_index, 500))
+        analyze(get_buffer_snap(y_buffer, buffer_index, 500))
+        analyze(get_buffer_snap(z_buffer, buffer_index, 500))
+        
+    buffer_index += 1
         
     
     
