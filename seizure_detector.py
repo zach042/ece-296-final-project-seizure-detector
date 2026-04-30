@@ -5,10 +5,7 @@ class SeizureDetector:
     
     def __init__(self, display):
         self.seize_count = 0
-        self.is_sezure = False
-        self.display = display
-
-        
+        self.display = display   
     
     def analyze(self, x_b, y_b, z_b):
     
@@ -16,31 +13,38 @@ class SeizureDetector:
         y_power = goertzel.multi_goertzel(y_b, [0,1,2,3])
         z_power = goertzel.multi_goertzel(z_b, [0,1,2,3])
         
-        safe_power = goertzel.safe_multi_goertzel(x_b, [0,1,2]) + goertzel.safe_multi_goertzel(y_b, [0,1,2]) + goertzel.safe_multi_goertzel(z_b, [0,1,2])
+        seizure_frequency_power = x_power + y_power + z_power
+        safe_frequency_power = goertzel.safe_multi_goertzel(x_b, [0,1,2]) + goertzel.safe_multi_goertzel(y_b, [0,1,2]) + goertzel.safe_multi_goertzel(z_b, [0,1,2])
+        total_frequency_power = seizure_frequency_power + safe_frequency_power
         
         print("power")
-        print(safe_power)
+        print(safe_frequency_power)
         print("power2")
-        print(x_power + y_power + z_power)
+        print(seizure_frequency_power)
         
         
-        if x_power + y_power + z_power >= 500:
+        if seizure_frequency_power >= 1300 and seizure_frequency_power / total_frequency_power > 0.75:
             self.seize_count += 1
+            print(self.seize_count)
             
-            if self.seize_count >= 5:
-                self.is_seizure = True
-            else:
-                self.is_seizure = False
+            
+            if self.seize_count >= 10:
+                self.display.draw_seizure_alert()
+                self.display.show()
+                
+            elif self.seize_count > 5: #if seize count for > 10 seconds
+                self.display.trigger_seizure_warning()
+                self.display.show()
+        
+
+
                 
         else:
             self.seize_count = 0
-            self.is_seizure = False
+            self.display.draw_main_menu()
             
-        if self.is_seizure:
-            self.display.draw_seizure_alert()
-            self.display.show()
-            print("seizure")
-    
+
+
 
 
 

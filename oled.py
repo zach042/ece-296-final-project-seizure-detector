@@ -27,6 +27,10 @@ class Oled:
         self.display.fill(0)
         self.display.text("SEIZURE DETECTED", 0, 0)
         self.display.text("ALERTING IN 15", 10, 0)
+        
+    def trigger_seizure_warning(self):
+        self.display.text("!!", 0, 30)
+    
     def show(self):
         self.display.show()
         
