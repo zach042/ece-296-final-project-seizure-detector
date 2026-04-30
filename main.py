@@ -5,7 +5,7 @@ import array
 import math
 import goertzel
 import oled
-
+import seizure_detector
 
 #sampling constantsconstants
 SAMPLE_RATE    = 50       # Hz
@@ -39,7 +39,7 @@ ALPHA = 0.98  # complementary filter constant
 sieze_count = 0
 is_seizure = False
 
-def measure(buffer_index):
+def measure_old(buffer_index):
     global gx, gy, gz
     ax = mpu.accel.x
     ay = mpu.accel.y
@@ -61,14 +61,23 @@ def measure(buffer_index):
     y_buffer[buffer_index] = ay - gy
     z_buffer[buffer_index] = az - gz
     
-    
+def measure(buffer_index):
+    x_buffer[buffer_index] = mpu.accel.x
+    y_buffer[buffer_index] = mpu.accel.y
+    z_buffer[buffer_index] = mpu.accel.z
 
 
 def fill_initial_buffers():
-    s = time.ticks_us()
     print("Filling bufers, wait 10 seconds")
     for i in range(500):
+        s = time.ticks_us()
         measure(i)
+        elapsed = time.ticks_us() - start
+        remaining = 20_000 - elapsed
+
+        if remaining > 0:
+            time.sleep_ms(remaining // 1000)
+        
         
     print("buffers filled")
     print(time.ticks_us() - s)
@@ -84,8 +93,8 @@ def get_buffer_snap(circular_buf, write_index, size):
 
 initialized = False
 oled = oled.Oled()
-detector = oled.Detector()
 oled.boot()
+detector = seizure_detector.SeizureDetector(oled)
         
 while True:
     start = time.ticks_us()
@@ -99,15 +108,15 @@ while True:
     measure(buffer_index)
     
     if buffer_index % 25 == 0:
-        analyze(x_buffer, y_buffer, z_buffer)
+        detector.analyze(x_buffer, y_buffer, z_buffer)
         
     buffer_index += 1
     end = time.ticks_us()
     elapsed = end - start
     remaining = 20_000 - elapsed
 
-    #if remaining > 0:
-     #   time.sleep_ms(remaining // 1000)
+    if remaining > 0:
+        time.sleep_ms(remaining // 1000)
     
     
     #print(time.ticks_us() - start)

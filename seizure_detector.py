@@ -3,37 +3,47 @@ import oled
 
 class SeizureDetector:
     
-    def __init__(self, oled):
+    def __init__(self, display):
         self.seize_count = 0
         self.is_sezure = False
-        oled.display.text("hey", 0, 0)
-        oled.show()
+        self.display = display
+
         
     
-    def analyze(x_b, y_b, z_b):
+    def analyze(self, x_b, y_b, z_b):
     
         x_power = goertzel.multi_goertzel(x_b, [0,1,2,3])
         y_power = goertzel.multi_goertzel(y_b, [0,1,2,3])
         z_power = goertzel.multi_goertzel(z_b, [0,1,2,3])
         
+        safe_power = goertzel.safe_multi_goertzel(x_b, [0,1,2]) + goertzel.safe_multi_goertzel(y_b, [0,1,2]) + goertzel.safe_multi_goertzel(z_b, [0,1,2])
+        
+        print("power")
+        print(safe_power)
+        print("power2")
+        print(x_power + y_power + z_power)
+        
+        
         if x_power + y_power + z_power >= 500:
-            sieze_count += 1
+            self.seize_count += 1
             
-            if sieze_count >= 5:
+            if self.seize_count >= 5:
                 self.is_seizure = True
             else:
                 self.is_seizure = False
                 
         else:
-            self.sieze_count = 0
+            self.seize_count = 0
             self.is_seizure = False
             
-        if is_seizure:
-            oled.draw_seizure_alert()
-            oled.show()
+        if self.is_seizure:
+            self.display.draw_seizure_alert()
+            self.display.show()
             print("seizure")
     
 
 
-oled = oled.Oled()
-test = SeizureDetector(oled)
+
+
+
+
