@@ -4,10 +4,8 @@ import time
 import array
 import math
 import goertzel
-#import oled
+import oled
 
-#math constants
-PI = math.pi
 
 #sampling constantsconstants
 SAMPLE_RATE    = 50       # Hz
@@ -23,6 +21,7 @@ i2c.writeto_mem(MPU_ADDR, 0x1A, bytes([0x03]))  #DLPF 44 Hz bandwidth
 i2c.writeto_mem(MPU_ADDR, 0x19, bytes([19]))     #50 Hz sample rate
 mpu = MPU6050(i2c)
 
+
 #buffers - data points storing wave behavior
 x_buffer = array.array('f', [0.0] * BUFFER_SIZE)
 y_buffer = array.array('f', [0.0] * BUFFER_SIZE)
@@ -37,8 +36,10 @@ gy = mpu.accel.y
 gz = mpu.accel.z
 ALPHA = 0.98  # complementary filter constant
 
+sieze_count = 0
+is_seizure = False
+
 def measure(buffer_index):
-    start_t = time.ticks_us()
     global gx, gy, gz
     ax = mpu.accel.x
     ay = mpu.accel.y
@@ -59,10 +60,8 @@ def measure(buffer_index):
     x_buffer[buffer_index] = ax - gx
     y_buffer[buffer_index] = ay - gy
     z_buffer[buffer_index] = az - gz
-        
-    end_t = time.ticks_us()
-    while time.ticks_diff(end_t, start_t) < 20000:
-        end_t = time.ticks_us()
+    
+    
 
 
 def fill_initial_buffers():
@@ -75,29 +74,21 @@ def fill_initial_buffers():
     print(time.ticks_us() - s)
     
     
-    
+
+snap = array.array('f', [0.0] * 500)    
 def get_buffer_snap(circular_buf, write_index, size):
-    snap = array.array('f', [0.0] * size)
     for i in range(size):
         snap[i] = circular_buf[(write_index + i) % size]
     return snap
 
 
-    
-def analyze(buffer):
-    power = goertzel.multi_frequency_power(buffer, 3, 6, SAMPLE_RATE, 500)
-    
-    # Check if buffer is actually filling with different values
-    unique_values = len(set(buffer))  # Should be close to 500 when full
-    
-    # Check if buffer_index is actually changing
-    print(f"Power: {power:.1f} | Unique samples: {unique_values} | Index: {buffer_index}")
-
-    
-
-
 initialized = False
+oled = oled.Oled()
+detector = oled.Detector()
+oled.boot()
+        
 while True:
+    start = time.ticks_us()
     if initialized == False:
         fill_initial_buffers()
         initialized = True
@@ -108,12 +99,18 @@ while True:
     measure(buffer_index)
     
     if buffer_index % 25 == 0:
-        analyze(get_buffer_snap(x_buffer, buffer_index, 500))
-        analyze(get_buffer_snap(y_buffer, buffer_index, 500))
-        analyze(get_buffer_snap(z_buffer, buffer_index, 500))
+        analyze(x_buffer, y_buffer, z_buffer)
         
     buffer_index += 1
-        
+    end = time.ticks_us()
+    elapsed = end - start
+    remaining = 20_000 - elapsed
+
+    #if remaining > 0:
+     #   time.sleep_ms(remaining // 1000)
+    
+    
+    #print(time.ticks_us() - start)
     
     
 
