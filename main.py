@@ -7,13 +7,6 @@ import goertzel
 import oled
 import seizure_detector
 
-SAMPLE_RATE = 50 #hz
-BUFFER_SIZE = 500
-FREQUENCIES_TO_CHECK = [3,4,5,6,7,8]
-SAFE_FREQUENCIES = [0.5,1,2]
-COEFFICIENTS = precalculate_coefficients(FREQUENCIES_TO_CHECK)
-SAFE_COEFFICIENTS = precalculate_coefficients(SAFE_FREQUENCIES)
-FREQUENCY_INDICIES = [0,1,2,3,4,5]
 
 #sampling constantsconstants
 SAMPLE_RATE    = 50       # Hz
@@ -115,8 +108,13 @@ while True:
         
     measure(buffer_index)
     
-    if buffer_index % 25 == 0:
-        detector.analyze(x_buffer, y_buffer, z_buffer)
+    if detector.warning == True:
+        if buffer_index % 5 == 0:
+            detector.analyze(x_buffer, y_buffer, z_buffer)
+        
+    else:
+        if buffer_index % 25 == 0:
+            detector.analyze(x_buffer, y_buffer, z_buffer)
         
     buffer_index += 1
     end = time.ticks_us()
