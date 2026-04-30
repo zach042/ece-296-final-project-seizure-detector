@@ -58,56 +58,66 @@ def multi_goertzel(buffer, frequency_indicies):
     return power
 
 @micropython.native
-def safe_multi_goertzel(buffer, frequency_indices):
-    s = [[0.0, 0.0, 0.0] for _ in range(len(frequency_indices))]
-    powers = []
-    power = 0.0
+def three_axis_goertzel(xb, yb, zb, frequency_indices):
+    n = len(frequency_indices)
+    sx1=array.array('f',[0.0]*n); sx2=array.array('f',[0.0]*n)
+    sy1=array.array('f',[0.0]*n); sy2=array.array('f',[0.0]*n)
+    sz1=array.array('f',[0.0]*n); sz2=array.array('f',[0.0]*n)
+    power=0.0
 
-    for i in range(len(frequency_indices)):
-        s[i][0] = 0.0
-        s[i][1] = 0.0
-        s[i][2] = 0.0
+    for i in range(BUFFER_SIZE):
+        x=xb[i]
+        y=yb[i]
+        z=zb[i]
+        for j in range(n):
+            c=COEFFICIENTS[frequency_indices[j]]
+            sx0= x + c * sx1[j] - sx2[j]
+            sx2[j] = sx1[j]
+            sx1[j] = sx0
+            sy0= y + c * sy1[j] - sy2[j]
+            sy2[j] = sy1[j]
+            sy1[j] = sy0
+            sz0= z + c * sz1[j] - sz2[j]
+            sz2[j] = sz1[j]
+            sz1[j] = sz0
     
-    for n in range(BUFFER_SIZE):
-        for i in frequency_indices:
-            s[i][0] = buffer[n] + SAFE_COEFFICIENTS[i] * s[i][1] - s[i][2]
-            s[i][2] = s[i][1]
-            s[i][1] = s[i][0]
-        
-    for i in frequency_indices:
-        #powers.append(s[i][1]*s[i][1] + s[i][2]*s[i][2] - (COEFFICIENTS[i] * s[i][1] * s[i][2]))
-        power += s[i][1]*s[i][1] + s[i][2]*s[i][2] - (SAFE_COEFFICIENTS[i] * s[i][1] * s[i][2])
-        
+    for j in range(n):
+        c=COEFFICIENTS[frequency_indices[j]]
+        power += sx1[j] * sx1[j] + sx2[j] * sx2[j] - c * sx1[j] * sx2[j]
+        power += sy1[j] * sy1[j] + sy2[j] * sy2[j] - c * sy1[j] * sy2[j]
+        power += sz1[j] * sz1[j] + sz2[j] * sz2[j] - c * sz1[j] * sz2[j]
     return power
 
-        
-
 @micropython.native
-def three_axis_multi_frequency_goertzel(xb, yb, zb, frequency_indicies):
-    max_idx = max(frequency_indicies) + 1
-    sx = [[0.0, 0.0, 0.0] for _ in range(max_idx)]
-    sy = [[0.0, 0.0, 0.0] for _ in range(max_idx)]
-    sz = [[0.0, 0.0, 0.0] for _ in range(max_idx)]
-    power = 0.0
-        
-    for n in range(BUFFER_SIZE):
-        for i in frequency_indicies:
-            sx[i][0] = xb[n] + COEFFICIENTS[i] * sx[i][1] - sx[i][2]
-            sx[i][2] = sx[i][1]
-            sx[i][1] = sx[i][0]
-            sy[i][0] = yb[n] + COEFFICIENTS[i] * sy[i][1] - sy[i][2]
-            sy[i][2] = sy[i][1]
-            sy[i][1] = sy[i][0]
-            sz[i][0] = zb[n] + COEFFICIENTS[i] * sz[i][1] - sz[i][2]
-            sz[i][2] = sz[i][1]
-            sz[i][1] = sz[i][0]
-            
-    for i in frequency_indicies:
-        #powers.append(s[i][1]*s[i][1] + s[i][2]*s[i][2] - (COEFFICIENTS[i] * s[i][1] * s[i][2]))
-        power += sx[i][1]*sx[i][1] + sx[i][2]*sx[i][2] - (COEFFICIENTS[i] * sx[i][1] * sx[i][2])
-        power += sy[i][1]*sy[i][1] + sy[i][2]*sy[i][2] - (COEFFICIENTS[i] * sy[i][1] * sy[i][2])
-        power += sz[i][1]*sz[i][1] + sz[i][2]*sz[i][2] - (COEFFICIENTS[i] * sz[i][1] * sz[i][2])
+def safe_three_axis_goertzel(xb, yb, zb, frequency_indices):
+    n = len(frequency_indices)
+    sx1=array.array('f',[0.0]*n); sx2=array.array('f',[0.0]*n)
+    sy1=array.array('f',[0.0]*n); sy2=array.array('f',[0.0]*n)
+    sz1=array.array('f',[0.0]*n); sz2=array.array('f',[0.0]*n)
+    power=0.0
+
+    for i in range(BUFFER_SIZE):
+        x=xb[i]
+        y=yb[i]
+        z=zb[i]
+        for j in range(n):
+            c=SAFE_COEFFICIENTS[frequency_indices[j]]
+            sx0= x + c * sx1[j] - sx2[j]
+            sx2[j] = sx1[j]
+            sx1[j] = sx0
+            sy0= y + c * sy1[j] - sy2[j]
+            sy2[j] = sy1[j]
+            sy1[j] = sy0
+            sz0= z + c * sz1[j] - sz2[j]
+            sz2[j] = sz1[j]
+            sz1[j] = sz0
     
+    for j in range(n):
+        c=SAFE_COEFFICIENTS[frequency_indices[j]]
+        power += sx1[j] * sx1[j] + sx2[j] * sx2[j] - c * sx1[j] * sx2[j]
+        power += sy1[j] * sy1[j] + sy2[j] * sy2[j] - c * sy1[j] * sy2[j]
+        power += sz1[j] * sz1[j] + sz2[j] * sz2[j] - c * sz1[j] * sz2[j]
+    return power
 
 
 def multi_frequency_goertzel(buffer, low_frequency, high_frequency, sample_rate, number_samples, steps = 6):

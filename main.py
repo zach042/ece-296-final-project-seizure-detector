@@ -6,7 +6,7 @@ import math
 import goertzel
 import oled
 import seizure_detector
-
+import ir_controller
 
 #sampling constantsconstants
 SAMPLE_RATE    = 50       # Hz
@@ -27,6 +27,7 @@ mpu = MPU6050(i2c)
 x_buffer = array.array('f', [0.0] * BUFFER_SIZE)
 y_buffer = array.array('f', [0.0] * BUFFER_SIZE)
 z_buffer = array.array('f', [0.0] * BUFFER_SIZE)
+mag_buffer = array.array('f', [0.0] * BUFFER_SIZE)
 buffer_index = 0
 buffer_full = False
 sample_count = 0
@@ -66,8 +67,15 @@ def measure(buffer_index):
     x_buffer[buffer_index] = mpu.accel.x
     y_buffer[buffer_index] = mpu.accel.y
     z_buffer[buffer_index] = mpu.accel.z
+    
+@micropython.native
+def measure_mag(buffer_index):
+    x_val = mpu.accel.x
+    y_val = mpu.accel.y
+    z_val = mpu.accel.z
+    mag_buffer[buffer_index] = math.sqrt((x_val * x_val) + (y_val * y_val) + (z_val * z_val))
 
-
+@micropython.native
 def fill_initial_buffers():
     print("Filling bufers, wait 10 seconds")
     for i in range(500):
@@ -83,38 +91,25 @@ def fill_initial_buffers():
     print("buffers filled")
     print(time.ticks_us() - s)
     
-    
-
-snap = array.array('f', [0.0] * 500)    
-def get_buffer_snap(circular_buf, write_index, size):
-    for i in range(size):
-        snap[i] = circular_buf[(write_index + i) % size]
-    return snap
 
 
 initialized = False
 oled = oled.Oled()
 oled.boot()
 detector = seizure_detector.SeizureDetector(oled)
-        
+controller = ir_controller.IRController(oled)
 while True:
     start = time.ticks_us()
     if initialized == False:
         fill_initial_buffers()
         initialized = True
-        
     if buffer_index == 500:
         buffer_index = 0
         
     measure(buffer_index)
     
-    if detector.warning == True:
-        if buffer_index % 5 == 0:
-            detector.analyze(x_buffer, y_buffer, z_buffer)
-        
-    else:
-        if buffer_index % 25 == 0:
-            detector.analyze(x_buffer, y_buffer, z_buffer)
+    if buffer_index % 25 == 0:
+        detector.analyze(x_buffer, y_buffer, z_buffer, mag_buffer)
         
     buffer_index += 1
     end = time.ticks_us()
@@ -125,7 +120,7 @@ while True:
         time.sleep_ms(remaining // 1000)
     
     
-    #print(time.ticks_us() - start)
+    print('time', time.ticks_us() - start)
     
     
 

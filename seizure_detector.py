@@ -1,5 +1,6 @@
 import goertzel
 import oled
+import _thread
 
 class SeizureDetector:
     
@@ -7,24 +8,28 @@ class SeizureDetector:
         self.seize_count = 0
         self.display = display
         self.warning = False
-    
-    def analyze(self, x_b, y_b, z_b):
-    
-        x_power = goertzel.multi_goertzel(x_b, [0,1,2,3])
-        y_power = goertzel.multi_goertzel(y_b, [0,1,2,3])
-        z_power = goertzel.multi_goertzel(z_b, [0,1,2,3])
         
-        seizure_frequency_power = x_power + y_power + z_power
-        safe_frequency_power = goertzel.safe_multi_goertzel(x_b, [0,1,2]) + goertzel.safe_multi_goertzel(y_b, [0,1,2]) + goertzel.safe_multi_goertzel(z_b, [0,1,2])
+    @micropython.native
+    def analyze(self, x_b, y_b, z_b, mag_b):
+    
+        #x_power = goertzel.multi_goertzel(x_b, [0,1,2,3,4,5])
+        #y_power = goertzel.multi_goertzel(y_b, [0,1,2,3,4,5])
+        #z_power = goertzel.multi_goertzel(z_b, [0,1,2,3,4,5])
+        
+        #seizure_frequency_power = goertzel.multi_goertzel(x_b, [0,1,2,3,4,5]) + goertzel.multi_goertzel(y_b, [0,1,2,3,4,5]) + goertzel.multi_goertzel(z_b, [0,1,2,3,4,5])
+        seizure_frequency_power = goertzel.three_axis_goertzel(x_b, y_b, z_b, [0,1,2,3,4,5])
+        #safe_frequency_power = goertzel.safe_multi_goertzel(x_b, [0,1,2]) + goertzel.safe_multi_goertzel(y_b, [0,1,2]) + goertzel.safe_multi_goertzel(z_b, [0,1,2])
+        
+        safe_frequency_power = goertzel.safe_three_axis_goertzel(x_b, y_b, z_b, [0,1,2])
         total_frequency_power = seizure_frequency_power + safe_frequency_power
         
-        print("power")
+        print("safe")
         print(safe_frequency_power)
-        print("power2")
+        print("seiz")
         print(seizure_frequency_power)
         
         
-        if seizure_frequency_power >= 1300 and seizure_frequency_power / total_frequency_power >= 0.75:
+        if seizure_frequency_power >= 1000 and seizure_frequency_power / total_frequency_power >= 0.7:
             self.seize_count += 1
             print(self.seize_count)
             
