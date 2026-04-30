@@ -15,6 +15,7 @@ class Oled:
         self.display = dsp
     
     def draw_main_menu(self):
+        self.display.fill(0)
         self.display.text("Time:", 0,0)
         
     def draw_right_menu(self):
@@ -26,10 +27,12 @@ class Oled:
     def draw_seizure_alert(self):
         self.display.fill(0)
         self.display.text("SEIZURE DETECTED", 0, 0)
-        self.display.text("ALERTING IN 15", 10, 0)
+        self.display.show()
         
     def trigger_seizure_warning(self):
+        self.display.fill(0)
         self.display.text("!!", 0, 30)
+        self.display.show()
     
     def show(self):
         self.display.show()
@@ -45,4 +48,6 @@ class Oled:
         
         
       
+
+
 

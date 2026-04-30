@@ -40,18 +40,18 @@ def single_goertzel(buffer, frequency_index):
     
  
 @micropython.native
-def multi_goertzel(buffer, frequency_indices):
-    s = [[0.0, 0.0, 0.0] for _ in range(len(frequency_indices))]
+def multi_goertzel(buffer, frequency_indicies):
+    s = [[0.0, 0.0, 0.0] for _ in range(len(frequency_indicies))]
     powers = []
     power = 0.0
     
     for n in range(BUFFER_SIZE):
-        for i in frequency_indices:
+        for i in frequency_indicies:
             s[i][0] = buffer[n] + COEFFICIENTS[i] * s[i][1] - s[i][2]
             s[i][2] = s[i][1]
             s[i][1] = s[i][0]
         
-    for i in frequency_indices:
+    for i in frequency_indicies:
         #powers.append(s[i][1]*s[i][1] + s[i][2]*s[i][2] - (COEFFICIENTS[i] * s[i][1] * s[i][2]))
         power += s[i][1]*s[i][1] + s[i][2]*s[i][2] - (COEFFICIENTS[i] * s[i][1] * s[i][2])
         
@@ -132,4 +132,6 @@ def write_frequency(name, collection, power):
     
     f = open("test.txt", "w")
     
+
+
 

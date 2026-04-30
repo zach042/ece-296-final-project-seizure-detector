@@ -3,10 +3,10 @@ import oled
 
 class SeizureDetector:
     
-    def __init__(self, display, buffer_index):
+    def __init__(self, display):
         self.seize_count = 0
         self.display = display
-        self.buffer_index = buffer_index
+        self.warning = False
     
     def analyze(self, x_b, y_b, z_b):
     
@@ -31,11 +31,10 @@ class SeizureDetector:
             
             if self.seize_count >= 10:
                 self.display.draw_seizure_alert()
-                self.display.show()
                 
-            if self.seize_count > 5: #if seize count for > 10 seconds
+            if self.seize_count > 5 and self.seize_count < 10: #if seize count for > 10 seconds
                 self.display.trigger_seizure_warning()
-                self.display.show()
+                self.warning = True
         
 
 
@@ -43,8 +42,7 @@ class SeizureDetector:
         else:
             self.seize_count = 0
             self.display.draw_main_menu()
-            
-
+            self.warning = False
 
 
 
