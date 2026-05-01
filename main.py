@@ -27,7 +27,6 @@ mpu = MPU6050(i2c)
 x_buffer = array.array('f', [0.0] * BUFFER_SIZE)
 y_buffer = array.array('f', [0.0] * BUFFER_SIZE)
 z_buffer = array.array('f', [0.0] * BUFFER_SIZE)
-mag_buffer = array.array('f', [0.0] * BUFFER_SIZE)
 buffer_index = 0
 buffer_full = False
 sample_count = 0
@@ -69,13 +68,6 @@ def measure(buffer_index):
     z_buffer[buffer_index] = mpu.accel.z
     
 @micropython.native
-def measure_mag(buffer_index):
-    x_val = mpu.accel.x
-    y_val = mpu.accel.y
-    z_val = mpu.accel.z
-    mag_buffer[buffer_index] = math.sqrt((x_val * x_val) + (y_val * y_val) + (z_val * z_val))
-
-@micropython.native
 def fill_initial_buffers():
     print("Filling bufers, wait 10 seconds")
     for i in range(500):
@@ -109,7 +101,7 @@ while True:
     measure(buffer_index)
     
     if buffer_index % 25 == 0:
-        detector.analyze(x_buffer, y_buffer, z_buffer, mag_buffer)
+        detector.analyze(x_buffer, y_buffer, z_buffer)
 
         
     buffer_index += 1

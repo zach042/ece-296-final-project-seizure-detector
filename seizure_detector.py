@@ -1,7 +1,7 @@
 import goertzel
 import oled
 import _thread
-
+import time
 class SeizureDetector:
     
     def __init__(self, display):
@@ -15,19 +15,21 @@ class SeizureDetector:
         self.seizure_power = 0.0
         self.total_power = 0.0
         self.safe_power = 0.0
-        
-    @micropython.native
-    def analyze(self, x_b, y_b, z_b, mag_b):
-
-        self.input_x = x_b
-        self.input_y = y_b
-        self.input_z = z_b
-        
+        self.run_goertzel = False
         try:
             _thread.start_new_thread(self.core2_worker, ())
             print("Worker thread started")
         except Exception as e:
             print(f"Failed to start worker: {e}")
+        
+    @micropython.native
+    def analyze(self, x_b, y_b, z_b):
+
+        self.input_x = x_b
+        self.input_y = y_b
+        self.input_z = z_b
+        self.run_goertzel = True
+
         
         
         if self.seizure_power != None:
@@ -47,14 +49,17 @@ class SeizureDetector:
                 self.warning = False
         
     def core2_worker(self):
-        
-        if self.input_x != None:
-            
-            self.seizure_power = goertzel.three_axis_goertzel(self.input_x, self.input_y, self.input_z, [0,1,2,3,4,5])        
-            self.safe_power = goertzel.safe_three_axis_goertzel(self.input_x, self.input_y, self.input_z, [0,1,2])
-            self.total_power = self.seizure_power + self.safe_power
-                
+        while True:
+            st = time.ticks_us()
+            if self.input_x != None and self.run_goertzel == True:
+                self.seizure_power = goertzel.three_axis_goertzel(self.input_x, self.input_y, self.input_z, [0,1,2,3,4,5])        
+                self.safe_power = goertzel.safe_three_axis_goertzel(self.input_x, self.input_y, self.input_z, [0,1,2])
+                self.total_power = self.seizure_power + self.safe_power
+                self.run_goertzel = False
+                print('time for goertzel: ', time.ticks_us() - st)
 
+            time.sleep_ms(10)
+                
 
 
 
