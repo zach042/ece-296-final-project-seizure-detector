@@ -108,7 +108,7 @@ while True:
         
     measure(buffer_index)
     
-    if buffer_index % 100 == 0:
+    if buffer_index % 25 == 0:
         detector.analyze(x_buffer, y_buffer, z_buffer, mag_buffer)
 
         
