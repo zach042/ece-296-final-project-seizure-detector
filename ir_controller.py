@@ -23,28 +23,48 @@ class IRController:
             print(self.input)
             print(self.display.page)
             self.command_oled()
+            
+            
     
     def command_oled(self):
         print('page', self.display.page)
         if self.input == "0x00ff02fd":
+            self.display.page_change = True
+            
             if self.display.page == 0:
-                self.display.draw_left_menu()
+                self.display.page = -1
                 
             elif self.display.page == 1:
-                self.display.draw_main_menu()
+                self.display.page = 0
                 
             elif self.display.page == -1:
-                self.display.draw_right_menu()
+                self.display.page = 1
+                
+            self.display.redraw_menu()
+
 
         elif self.input == "0x00ffc23d":
+            self.display.page_change = True
+
             if self.display.page == 0:
-                self.display.draw_right_menu()
+                self.display.page = 1
             
             elif self.display.page == 1:
-                self.display.draw_left_menu()
+                self.display.page = -1
                 
             elif self.display.page == -1:
-                self.display.draw_main_menu()
+                self.display.page = 0 
+                
+            self.display.redraw_menu()
+                
+        elif self.input == "0x00ff906f":
+            self.display.select = self.display.select + 1
+            self.display.redraw_menu()
+        
+        elif self.input == "0x00ffa857":
+            self.display.select = self.display.select - 1
+            self.display.redraw_menu()
+            
     
     def reset(self):
         self.input_received = False
