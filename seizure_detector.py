@@ -46,6 +46,7 @@ class SeizureDetector:
             else:
                 self.seize_count = 0
                 self.display.draw_main_menu()
+                self.display.draw_same_menu()
                 self.warning = False
         
     def core2_worker(self):
@@ -57,9 +58,12 @@ class SeizureDetector:
                 self.total_power = self.seizure_power + self.safe_power
                 self.run_goertzel = False
                 print('time for goertzel: ', time.ticks_us() - st)
+                
 
             time.sleep_ms(10)
                 
+
+
 
 
 
