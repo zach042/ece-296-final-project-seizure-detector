@@ -6,6 +6,8 @@ import math
 import goertzel
 import oled
 import seizure_detector
+import ir_controller
+import gc
 
 
 #sampling constantsconstants
@@ -92,11 +94,11 @@ def get_buffer_snap(circular_buf, write_index, size):
     return snap
 
 
-initialized = False
+initialized = True
 oled = oled.Oled()
 oled.boot()
 detector = seizure_detector.SeizureDetector(oled)
-        
+ir_control = ir_controller.IRController(oled)
 while True:
     start = time.ticks_us()
     if initialized == False:
@@ -107,25 +109,24 @@ while True:
         buffer_index = 0
         
     measure(buffer_index)
+    ir_control.await_input()
     
-    if detector.warning == True:
-        if buffer_index % 5 == 0:
-            detector.analyze(x_buffer, y_buffer, z_buffer)
+
+
         
-    else:
-        if buffer_index % 25 == 0:
-            detector.analyze(x_buffer, y_buffer, z_buffer)
+    if buffer_index % 25 == 0:
+        detector.analyze(x_buffer, y_buffer, z_buffer)
         
     buffer_index += 1
     end = time.ticks_us()
     elapsed = end - start
     remaining = 20_000 - elapsed
-
+    
     if remaining > 0:
         time.sleep_ms(remaining // 1000)
     
     
-    #print(time.ticks_us() - start)
+    #print('time to cycle',time.ticks_us() - start)
     
     
 

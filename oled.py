@@ -13,25 +13,37 @@ class Oled:
         self.y_bottom = 63.0
         self.page = 0
         self.display = dsp
+        
     
     def draw_main_menu(self):
+        self.page = 0
         self.display.fill(0)
         self.display.text("Time:", 0,0)
+        self.show()
         
     def draw_right_menu(self):
-        self.display.text("", 0,0)
+        self.page = 1
+        self.display.fill(0)
+        self.display.text("right menu", 0,0)
+        self.show()
         
     def draw_left_menu(self):
-        self.display.text("", 0,0)
+        self.page = -1
+        self.display.fill(0)
+        self.display.text("left menu", 0,0)
+        self.show()
         
+    def draw_same_menu(self):
+        self.page = self.page
     def draw_seizure_alert(self):
+        self.page = 2
         self.display.fill(0)
         self.display.text("SEIZURE DETECTED", 0, 0)
         self.display.show()
         
     def trigger_seizure_warning(self):
         self.display.fill(0)
-        self.display.text("!!", 0, 30)
+        self.display.text("!!", 10, 30)
         self.display.show()
     
     def show(self):
