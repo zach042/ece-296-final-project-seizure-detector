@@ -7,8 +7,7 @@ import goertzel
 import oled
 import seizure_detector
 import ir_controller
-import gc
-
+import buzzer
 
 #sampling constantsconstants
 SAMPLE_RATE    = 50       # Hz
@@ -68,8 +67,8 @@ def measure(buffer_index):
     x_buffer[buffer_index] = mpu.accel.x
     y_buffer[buffer_index] = mpu.accel.y
     z_buffer[buffer_index] = mpu.accel.z
-    
-@micropython.native
+
+
 def fill_initial_buffers():
     print("Filling bufers, wait 10 seconds")
     for i in range(500):
@@ -86,27 +85,25 @@ def fill_initial_buffers():
     print(time.ticks_us() - s)
     
 
-
 initialized = True
 oled = oled.Oled()
 oled.boot()
-detector = seizure_detector.SeizureDetector(oled)
-controller = ir_controller.IRController(oled)
+buzzer = buzzer.Buzzer()
+detector = seizure_detector.SeizureDetector(oled, buzzer)
 ir_control = ir_controller.IRController(oled)
+
 while True:
     start = time.ticks_us()
     if initialized == False:
         fill_initial_buffers()
         initialized = True
+        
     if buffer_index == 500:
         buffer_index = 0
         
     measure(buffer_index)
     ir_control.await_input()
     
-    if buffer_index % 25 == 0:
-        detector.analyze(x_buffer, y_buffer, z_buffer)
-
 
 
         
@@ -122,7 +119,6 @@ while True:
         time.sleep_ms(remaining // 1000)
     
     
-    print('time', time.ticks_us() - start)
     #print('time to cycle',time.ticks_us() - start)
     
     
