@@ -40,28 +40,6 @@ ALPHA = 0.98  # complementary filter constant
 
 sieze_count = 0
 is_seizure = False
-
-def measure_old(buffer_index):
-    global gx, gy, gz
-    ax = mpu.accel.x
-    ay = mpu.accel.y
-    az = mpu.accel.z
-    
-    rx = mpu.gyro.x * 0.01745  # deg/s to rad/s
-    ry = mpu.gyro.y * 0.01745
-    rz = mpu.gyro.z * 0.01745
-    
-    new_gx = gx + (gy * rz - gz * ry) * (1.0 / SAMPLE_RATE)
-    new_gy = gy + (gz * rx - gx * rz) * (1.0 / SAMPLE_RATE)
-    new_gz = gz + (gx * ry - gy * rx) * (1.0 / SAMPLE_RATE)
-    
-    gx = ALPHA * new_gx + (1 - ALPHA) * ax
-    gy = ALPHA * new_gy + (1 - ALPHA) * ay
-    gz = ALPHA * new_gz + (1 - ALPHA) * az
-    
-    x_buffer[buffer_index] = ax - gx
-    y_buffer[buffer_index] = ay - gy
-    z_buffer[buffer_index] = az - gz
     
 def measure(buffer_index):
     x_buffer[buffer_index] = mpu.accel.x
@@ -69,21 +47,6 @@ def measure(buffer_index):
     z_buffer[buffer_index] = mpu.accel.z
 
 
-def fill_initial_buffers():
-    print("Filling bufers, wait 10 seconds")
-    for i in range(500):
-        s = time.ticks_us()
-        measure(i)
-        elapsed = time.ticks_us() - s
-        remaining = 20_000 - elapsed
-
-        if remaining > 0:
-            time.sleep_ms(remaining // 1000)
-        
-        
-    print("buffers filled")
-    print(time.ticks_us() - s)
-    
 
 initialized = True
 oled = oled.Oled()
@@ -94,9 +57,6 @@ ir_control = ir_controller.IRController(oled)
 
 while True:
     start = time.ticks_us()
-    if initialized == False:
-        fill_initial_buffers()
-        initialized = True
         
     if buffer_index == 500:
         buffer_index = 0
