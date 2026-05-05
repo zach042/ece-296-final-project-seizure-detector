@@ -1,7 +1,7 @@
 from machine import UART, Pin
 import time
 
-gps = UART(1, baudrate=9600, tx=Pin(4), rx=Pin(5))
+gps = UART(0, baudrate=9600, tx=Pin(16), rx=Pin(17))
 
 class GPS:
     def __init__(self):
@@ -24,5 +24,10 @@ class GPS:
             time.sleep_ms(25)
         
 
+<<<<<<< Updated upstream
 
 gps = GPS()
+=======
+g = GPS()
+g.find_coords()
+>>>>>>> Stashed changes
