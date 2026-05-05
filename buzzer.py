@@ -2,7 +2,7 @@ import time
 import machine
 
 class Buzzer:
-    def __init__(self, pin_id=0):
+    def __init__(self, pin_id=18):
         self.buzzer = machine.Pin(pin_id, machine.Pin.OUT)
         self.is_active = False
         self.buzz_start_time = 0
@@ -43,4 +43,3 @@ class Buzzer:
 
     def is_buzzing(self):
         return self.is_active
-

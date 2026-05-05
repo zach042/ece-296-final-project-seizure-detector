@@ -2,7 +2,6 @@ import time
 from machine import Pin
 from ir_rx.nec import NEC_8
 from ir_rx.print_error import print_error
-irPin = 13
 import oled
 from pio_ir_rx import PIO_IR_NEC
     
@@ -13,7 +12,7 @@ class IRController:
         self.display = display
         self.input = None
         self.input_received = False
-        self.device = PIO_IR_NEC(pin=13)
+        self.device = PIO_IR_NEC(pin=19)
         
 
     def await_input(self):
@@ -71,5 +70,4 @@ class IRController:
     
     
         
-
 

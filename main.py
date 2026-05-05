@@ -18,7 +18,7 @@ ANALYZE_EVERY  = 25       # run analysis every 0.5 sec (25 samples at 50 Hz)
 
 # hardware config
 MPU_ADDR = 0x68
-i2c = I2C(0, sda=Pin(16), scl=Pin(17), freq=400000)
+i2c = I2C(0, sda=Pin(8), scl=Pin(9), freq=400000)
 i2c.writeto_mem(MPU_ADDR, 0x1A, bytes([0x03]))  #DLPF 44 Hz bandwidth
 i2c.writeto_mem(MPU_ADDR, 0x19, bytes([19]))     #50 Hz sample rate
 mpu = MPU6050(i2c)
@@ -79,7 +79,7 @@ while True:
         time.sleep_ms(remaining // 1000)
     
     
-    #print('time to cycle',time.ticks_us() - start)
+    print('time to cycle',time.ticks_us() - start)
     
     
 
