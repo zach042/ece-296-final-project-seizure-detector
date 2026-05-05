@@ -25,4 +25,6 @@ class GPS:
         
 
 
-gps = GPS()
+g = GPS()
+g.find_coords()
+
