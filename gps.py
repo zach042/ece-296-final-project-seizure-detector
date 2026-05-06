@@ -21,7 +21,9 @@ class GPS:
                     print(newl)
                     if newl[0] == "$GPGGA" and newl[2] != '' and self.fix == True:
                         self.lat = (int(newl[2][0:2]) + (float(newl[2][2:4]))/60)
+                        if newl[3] == 'S':
                         self.lon = (int(newl[4][0:3]) + (float(newl[4][3:-1]))/60)
+                        if newl[5] == 'W':
                         print(self.lat, self.lon)
                     elif newl[0] == "$GPRMC" and newl[2] != '' and self.fix == False:
                         if "A" in newl[12]:
@@ -29,4 +31,3 @@ class GPS:
                             self.fix = True
             time.sleep(0.1)
         
-test = GPS()

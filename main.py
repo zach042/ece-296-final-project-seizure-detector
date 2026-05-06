@@ -8,7 +8,7 @@ import oled
 import seizure_detector
 import ir_controller
 import buzzer
-
+import gps
 #sampling constantsconstants
 SAMPLE_RATE    = 50       # Hz
 BUFFER_SECS    = 10       # seconds of history
@@ -48,8 +48,8 @@ def measure(buffer_index):
     z_buffer[buffer_index] = mpu.accel.z
 
 
-
-initialized = True
+gps_module = gps.GPS()
+initialized = False
 oled = oled.Oled()
 oled.boot()
 buzzer = buzzer.Buzzer()
