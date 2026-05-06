@@ -15,6 +15,8 @@ class Oled:
         self.select = 0
         self.display = dsp
         self.page_change = False
+        self.lock = False
+        self.code_in = ""
         self.redraw_menu()
             
     def redraw_menu(self):
@@ -48,8 +50,17 @@ class Oled:
         
     def draw_seizure_alert(self):
         self.page = 2
+        self.lock = True
+        self.display.fill_rect(0, 40, 115, 64, 0)
         self.display.text("SEIZURE DETECTED", 0, 0)
+        self.display.text("enter code to", 0, 10)
+        self.display.text("disarm", 0, 20)
+        self.display.text("_ _ _ _", 0, 42)
+        self.display.text(" ".join(self.code_in), 0, 40)
+        
         self.display.show()
+        
+        
         
     def trigger_seizure_warning(self):
         self.display.fill(0)
