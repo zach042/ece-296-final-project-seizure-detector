@@ -8,7 +8,7 @@ import oled
 import seizure_detector
 import ir_controller
 import buzzer
-
+import gps
 #sampling constantsconstants
 SAMPLE_RATE    = 50       # Hz
 BUFFER_SECS    = 10       # seconds of history
@@ -18,7 +18,8 @@ ANALYZE_EVERY  = 25       # run analysis every 0.5 sec (25 samples at 50 Hz)
 
 # hardware config
 MPU_ADDR = 0x68
-i2c = I2C(0, sda=Pin(8), scl=Pin(9), freq=400000)
+i2c = I2C(
+    0, sda=Pin(8), scl=Pin(9), freq=400000)
 i2c.writeto_mem(MPU_ADDR, 0x1A, bytes([0x03]))  #DLPF 44 Hz bandwidth
 i2c.writeto_mem(MPU_ADDR, 0x19, bytes([19]))     #50 Hz sample rate
 mpu = MPU6050(i2c)
@@ -47,8 +48,8 @@ def measure(buffer_index):
     z_buffer[buffer_index] = mpu.accel.z
 
 
-
-initialized = True
+gps_module = gps.GPS()
+initialized = False
 oled = oled.Oled()
 oled.boot()
 buzzer = buzzer.Buzzer()
