@@ -74,12 +74,15 @@ class IRController:
             if self.display.page == -1:
                 if self.display.select == 1:
                     self.display.buzzer.state = not self.display.buzzer.state
-                if self.display.select == 2:
+                elif self.display.select == 2:
                     self.display.code_in = ""
                     self.display.page = -2
                     self.display.display.fill(0)
                     self.display.accept_code_in(self.input)
                     self.display.draw_change_code_menu()
+            elif self.display.page == 1:
+                if self.display.select == 2:
+                    self.display.draw_refresh_gps()
                     
             self.display.redraw_menu()
             

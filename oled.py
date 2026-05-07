@@ -8,13 +8,14 @@ dsp = SSD1306_I2C(128,64,i2c)
 numpad = {"0x00ff6897": 0, "0x00ff30cf": 1, "0x00ff18e7": 2, "0x00ff7a85": 3, "0x00ff10ef": 4, "0x00ff38c7": 5, "0x00ff5aa5": 6, "0x00ff42bd": 7, "0x00ff4ab5": 8, "0x00ff52ad": 9}
 
 class Oled:
-    def __init__(self, buzzer):
+    def __init__(self, buzzer, gps):
         self.x_left = 0.0
         self.x_right = 127.0
         self.y_top = 0.0
         self.y_bottom = 63.0
         self.page = 0
         self.select = 0
+        self.gps = gps
         
         self.display = dsp
         self.buzzer = buzzer
@@ -47,13 +48,36 @@ class Oled:
         
     def draw_right_menu(self):
         self.page = 1
-        self.display.text("right menu", 0,0)
+        self.display.text("gps config", 0,0)
+        if self.gps.fix == True:
+            self.display.text("gps connected", 0, 10)
+        elif self.gps.fix == False:
+            self.display.text("gps offline", 0, 10)
+        self.display.text("refresh gps", 0, 20)
+        self.display.text("_", 115, 20)
         self.show()
+    
+    def draw_refresh_gps(self):
+        self.display.fill(0)
+        self.display.text("refreshing gps", 0, 0)
+        self.display.text("loading", 60, 32)
+        self.show()
+        self.gps.find_coords()
+        self.display.fill(0)
+        if self.gps.fix == True:
+            self.display.text("gps signal found", 0, 30)
+            time.sleep(2)
+        elif self.gps.fix == False:
+            self.display.text("gps signal not found", 0, 30)
+            time.sleep(2)
+        self.display.fill(0)
+        self.redraw_menu()
+        
         
     def draw_left_menu(self):
         self.display.fill_rect(30, 10, 50, 64, 0)
         self.page = -1
-        self.display.text("left menu", 0,0)
+        self.display.text("Settings", 0,0)
         self.display.text("buzzer", 0,10)
         self.display.text(str(self.buzzer.state), 55, 10)
         self.display.text("change code", 0,20)

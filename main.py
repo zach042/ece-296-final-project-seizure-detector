@@ -48,10 +48,10 @@ def measure(buffer_index):
     z_buffer[buffer_index] = mpu.accel.z
 
 
-#gps_module = gps.GPS()
+gps_module = gps.GPS()
 initialized = False
 buzzer = buzzer.Buzzer()
-oled = oled.Oled(buzzer)
+oled = oled.Oled(buzzer, gps_module)
 oled.boot()
 detector = seizure_detector.SeizureDetector(oled, buzzer)
 ir_control = ir_controller.IRController(oled)
