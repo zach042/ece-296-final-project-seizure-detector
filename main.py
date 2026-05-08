@@ -50,9 +50,9 @@ def measure(buffer_index):
 
 gps_module = gps.GPS()
 initialized = False
-oled = oled.Oled()
-oled.boot()
 buzzer = buzzer.Buzzer()
+oled = oled.Oled(buzzer, gps_module)
+oled.boot()
 detector = seizure_detector.SeizureDetector(oled, buzzer)
 ir_control = ir_controller.IRController(oled)
 
@@ -80,7 +80,7 @@ while True:
         time.sleep_ms(remaining // 1000)
     
     
-    print('time to cycle',time.ticks_us() - start)
+    #print('time to cycle',time.ticks_us() - start)
     
     
 
