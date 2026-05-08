@@ -49,12 +49,16 @@ class Oled:
     def draw_right_menu(self):
         self.page = 1
         self.display.text("gps config", 0,0)
-        if self.gps.fix == True:
+        if self.gps.fix == True and self.gps.lat and self.gps.lon:
             self.display.text("gps connected", 0, 10)
+            self.display.text("lat: ", 0, 40)
+            self.display.text(str(self.gps.lat), 40, 40)
+            self.display.text("lon: ", 0, 50)
+            self.display.text(str(self.gps.lon), 40, 50)
         elif self.gps.fix == False:
             self.display.text("gps offline", 0, 10)
         self.display.text("refresh gps", 0, 20)
-        self.display.text("_", 115, 20)
+        self.display.text("_", 115, 23)
         self.show()
     
     def draw_refresh_gps(self):
@@ -111,11 +115,19 @@ class Oled:
         elif input == "0x00ff9867" and len(self.code_in) > 0:
             self.code_in = self.code_in[:-1]
         if len(self.code_in) == 4:
-            self.lock = False
-            self.page = 0
             self.display.fill(0)
             self.code = self.code_in
             self.code_in = ""
+            self.display.text("code changed", 0, 0)
+            self.display.text("to: ", 0, 10)
+            self.display.text(self.code, 0, 30)
+            self.show()
+            time.sleep(2)
+            self.display.fill(0)
+            self.lock = False
+            self.page = 0
+
+
         self.redraw_menu()
         
     def unlock_seizure_screen(self, input):
