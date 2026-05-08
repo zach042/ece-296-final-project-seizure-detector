@@ -50,9 +50,8 @@ class GPS:
                                 year = 2000 + int(newl[9][4:6])
                                 
                                 self.time = (f"{hour}:{minute}")
-                                self.date = (f"{year}/{month}/{day}")
+                                self.date = (f"{month}/{day}/{year}")
 
-                                # Set RTC with full datetime tuple
                                 self.rtc.datetime((year, month, day, 1, hour, minute, second, 0))
                                 print(f"RTC Set: {year}-{month:02d}-{day:02d} {hour:02d}:{minute:02d}:{second:02d}")
             except:
