@@ -5,6 +5,7 @@ from ir_rx.print_error import print_error
 import oled
 from pio_ir_rx import PIO_IR_NEC
 numpad = {"0x00ff6897": 0, "0x00ff30cf": 1, "0x00ff18e7": 2, "0x00ff7a85": 3, "0x00ff10ef": 4, "0x00ff38c7": 5, "0x00ff5aa5": 6, "0x00ff42bd": 7, "0x00ff4ab5": 8, "0x00ff52ad": 9}
+#commands = {page_right: "0x00ffc23d", page_left: "0x00ff02fd", sel_up: "0x00ffa857", sel_down: "0x00ff906f", enter: "0x00ff22dd", exit: ""}
 
 class IRController:
     
@@ -27,15 +28,26 @@ class IRController:
             elif self.display.lock == True and self.display.page == 2:
                 self.display.unlock_seizure_screen(self.input)
             elif self.display.lock == True and self.display.page == -2:
+                self.exit_menu()
                 self.display.accept_code_in(self.input)
             elif self.display.lock == True and self.display.page == 4:
+                self.exit_menu()
                 self.display.accept_date_in(self.input)
             elif self.display.lock == True and self.display.page == 5:
+                self.exit_menu()
                 self.command_oled()
             
             
+    def exit_menu(self):
+        if self.input == "0x00ffa25d" and self.display.page in [-2, 4, 5]:
+            print('EXITING')
+            self.display.lock = False
+            self.display.display.fill(0)
+            self.code_in = ""
+            self.display.draw_main_menu()
     
     def command_oled(self):
+        self.exit_menu()
         print('page', self.display.page)
         if self.input == "0x00ff02fd":
             self.display.page_change = True

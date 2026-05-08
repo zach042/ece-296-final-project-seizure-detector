@@ -136,12 +136,25 @@ class Oled:
         
     def draw_seizure_log_viewer(self):
         self.display.fill(0)
-        seizure_archive = self.logger.get_log_from_file(self.code_in).splitlines()
-        print(len(self.code_in))
-        print('sz', seizure_archive)
-        for i in range(self.select, len(seizure_archive)):
-            self.display.text(seizure_archive[i], 0, (i-self.select)*10)
-        self.show()
+        try:
+            seizure_archive = self.logger.get_log_from_file(self.code_in).splitlines()
+            print(len(self.code_in))
+            print('sz', seizure_archive)
+            for i in range(self.select, len(seizure_archive)):
+                self.display.text(seizure_archive[i], 0, (i-self.select)*10)
+            self.show()
+        except:
+            self.display.text("no seizures", 0, 0)
+            self.display.text(f"on {self.code_in}", 0, 10)
+            self.display.text("returning to", 0, 30)
+            self.display.text("main menu...", 0, 40)
+            self.show()
+            time.sleep(2)
+            self.display.fill(0)
+            self.code_in = ""
+            self.lock = False
+            self.draw_main_menu()
+            self.redraw_menu()
             
         
 
@@ -173,9 +186,7 @@ class Oled:
             if '0' in self.code_in:
                 self.code_in = self.code_in.replace('0', '')
             self.display.fill(0)
-            self.display.text("processing", 0, 0)
             self.show()
-            time.sleep(2)
             self.display.fill(0)
             self.page = 5
     
