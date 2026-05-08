@@ -19,6 +19,9 @@ class GPS:
                     newl = line.decode('utf-8').strip()
                     newl = newl.split(',')
                     print(newl)
+                    
+                    if newl[0] == "$GPRMC" and not "A" in newl[12]:
+                        self.fix = False
                     if newl[0] == "$GPGGA" and newl[2] != '' and self.fix == True:
                         self.lat = (int(newl[2][0:2]) + (float(newl[2][2:4]))/60)
                         if newl[3] == 'S':
@@ -32,9 +35,5 @@ class GPS:
                             print('\nfixxxx')
                             self.fix = True
             time.sleep(0.1)
-<<<<<<< Updated upstream
-        
-=======
         
 
->>>>>>> Stashed changes
