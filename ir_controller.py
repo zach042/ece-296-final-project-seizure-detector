@@ -5,7 +5,7 @@ from ir_rx.print_error import print_error
 import oled
 from pio_ir_rx import PIO_IR_NEC
 numpad = {"0x00ff6897": 0, "0x00ff30cf": 1, "0x00ff18e7": 2, "0x00ff7a85": 3, "0x00ff10ef": 4, "0x00ff38c7": 5, "0x00ff5aa5": 6, "0x00ff42bd": 7, "0x00ff4ab5": 8, "0x00ff52ad": 9}
-#commands = {page_right: "0x00ffc23d", page_left: "0x00ff02fd", sel_up: "0x00ffa857", sel_down: "0x00ff906f", enter: "0x00ff22dd", exit: ""}
+commands = {"page_right": "0x00ffc23d", "page_left": "0x00ff02fd", "sel_up": "0x00ffa857", "sel_down": "0x00ff906f", "enter": "0x00ff22dd", "exit": "0x00ffa25d", "delete": "0x00ff9867"}
 
 class IRController:
     
@@ -39,7 +39,7 @@ class IRController:
             
             
     def exit_menu(self):
-        if self.input == "0x00ffa25d" and self.display.page in [-2, 4, 5]:
+        if self.input == commands["exit"] and self.display.page in [-2, 4, 5]:
             print('EXITING')
             self.display.lock = False
             self.display.display.fill(0)
@@ -49,7 +49,7 @@ class IRController:
     def command_oled(self):
         self.exit_menu()
         print('page', self.display.page)
-        if self.input == "0x00ff02fd":
+        if self.input == commands["page_left"]:
             self.display.page_change = True
             
             if self.display.page == 0:
@@ -64,7 +64,7 @@ class IRController:
             self.display.redraw_menu()
 
 
-        elif self.input == "0x00ffc23d":
+        elif self.input == commands["page_right"]:
             self.display.page_change = True
 
             if self.display.page == 0:
@@ -78,15 +78,15 @@ class IRController:
                 
             self.display.redraw_menu()
                 
-        elif self.input == "0x00ff906f":
+        elif self.input == commands["sel_down"]:
             self.display.select = self.display.select + 1
             self.display.redraw_menu()
         
-        elif self.input == "0x00ffa857":
+        elif self.input == commands["sel_up"]:
             self.display.select = self.display.select - 1
             self.display.redraw_menu()
             
-        elif self.input == "0x00ff22dd":
+        elif self.input == commands["enter"]:
             if self.display.page == 0:
                 if self.display.select == 3:
                     self.display.code_in = ""
@@ -115,7 +115,7 @@ class IRController:
         print(self.input)
         if self.input in numpad and len(self.display.code_in) < 4:
             self.display.code_in += str(numpad[self.input])
-        elif self.input == "0x00ff9867" and len(self.display.code_in) > 0:
+        elif self.input == commands["delete"] and len(self.display.code_in) > 0:
             self.display.code_in = self.display.code_in[:-1]
         if self.display.code_in == self.code:
             self.display.lock = False
