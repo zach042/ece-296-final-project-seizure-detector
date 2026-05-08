@@ -6,7 +6,7 @@ import buzzer
 
 class SeizureDetector:
     
-    def __init__(self, display, buzzer):
+    def __init__(self, display, buzzer, logger):
         self.seize_count = 0
         self.display = display
         self.buzzer = buzzer
@@ -19,6 +19,8 @@ class SeizureDetector:
         self.total_power = 0.0
         self.safe_power = 0.0
         self.run_goertzel = False
+        self.logger = logger
+        
         try:
             _thread.start_new_thread(self.core2_worker, ())
             print("Worker thread started")
@@ -34,13 +36,14 @@ class SeizureDetector:
         self.run_goertzel = True
         
         if self.seizure_power != None:
-            if self.seizure_power >= 1000 and self.seizure_power / self.total_power >= 0.9:
+            if self.seizure_power >= 1000 and self.seizure_power / self.total_power >= 0.94:
                 self.seize_count += 1
                 print(self.seize_count)
                 
                 if self.seize_count >= 10:
                     self.display.draw_seizure_alert()
                     self.buzzer.trigger()
+                    self.logger.log_seizure_event(self.display.gps.date)
                     
                 if self.seize_count > 5 and self.seize_count < 10: #if seize count for > 10 seconds
                     self.display.trigger_seizure_warning()
@@ -61,10 +64,10 @@ class SeizureDetector:
                 self.run_goertzel = False
             
             self.buzzer.update()
-            print('time for goertzel: ', time.ticks_us() - st)
+            #print('time for goertzel: ', time.ticks_us() - st)
                 
 
-            time.sleep_ms(10)
+            time.sleep_ms(100)
                 
 
 

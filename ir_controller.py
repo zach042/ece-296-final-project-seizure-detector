@@ -28,6 +28,10 @@ class IRController:
                 self.display.unlock_seizure_screen(self.input)
             elif self.display.lock == True and self.display.page == -2:
                 self.display.accept_code_in(self.input)
+            elif self.display.lock == True and self.display.page == 4:
+                self.display.accept_date_in(self.input)
+            elif self.display.lock == True and self.display.page == 5:
+                self.command_oled()
             
             
     
@@ -71,15 +75,24 @@ class IRController:
             self.display.redraw_menu()
             
         elif self.input == "0x00ff22dd":
-            if self.display.page == -1:
+            if self.display.page == 0:
+                if self.display.select == 3:
+                    self.display.code_in = ""
+                    self.display.page = 4
+                    self.display.display.fill(0)
+                    self.display.accept_date_in(self.input)
+                    
+            elif self.display.page == -1:
                 if self.display.select == 1:
                     self.display.buzzer.state = not self.display.buzzer.state
+                    
                 elif self.display.select == 2:
                     self.display.code_in = ""
                     self.display.page = -2
                     self.display.display.fill(0)
                     self.display.accept_code_in(self.input)
                     self.display.draw_change_code_menu()
+                    
             elif self.display.page == 1:
                 if self.display.select == 2:
                     self.display.draw_refresh_gps()

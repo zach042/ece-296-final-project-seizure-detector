@@ -9,6 +9,7 @@ import seizure_detector
 import ir_controller
 import buzzer
 import gps
+import seizure_logger
 #sampling constantsconstants
 SAMPLE_RATE    = 50       # Hz
 BUFFER_SECS    = 10       # seconds of history
@@ -49,11 +50,13 @@ def measure(buffer_index):
 
 
 gps_module = gps.GPS()
+logger = seizure_logger.SeizureLogger(gps_module)
 initialized = False
 buzzer = buzzer.Buzzer()
-oled = oled.Oled(buzzer, gps_module)
+oled = oled.Oled(buzzer, gps_module, logger)
 oled.boot()
-detector = seizure_detector.SeizureDetector(oled, buzzer)
+logger = seizure_logger.SeizureLogger(gps_module)
+detector = seizure_detector.SeizureDetector(oled, buzzer, logger)
 ir_control = ir_controller.IRController(oled)
 
 while True:

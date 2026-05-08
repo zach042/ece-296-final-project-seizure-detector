@@ -8,7 +8,7 @@ dsp = SSD1306_I2C(128,64,i2c)
 numpad = {"0x00ff6897": 0, "0x00ff30cf": 1, "0x00ff18e7": 2, "0x00ff7a85": 3, "0x00ff10ef": 4, "0x00ff38c7": 5, "0x00ff5aa5": 6, "0x00ff42bd": 7, "0x00ff4ab5": 8, "0x00ff52ad": 9}
 
 class Oled:
-    def __init__(self, buzzer, gps):
+    def __init__(self, buzzer, gps, logger):
         self.x_left = 0.0
         self.x_right = 127.0
         self.y_top = 0.0
@@ -16,6 +16,7 @@ class Oled:
         self.page = 0
         self.select = 0
         self.gps = gps
+        self.logger = logger
         
         self.display = dsp
         self.buzzer = buzzer
@@ -29,7 +30,8 @@ class Oled:
         self.redraw_menu()
             
     def redraw_menu(self):
-        self.draw_select()
+        if self.page != 5:
+            self.draw_select()
         if self.page == 0:
             self.draw_main_menu()
         elif self.page == 1:
@@ -40,6 +42,10 @@ class Oled:
             self.draw_left_menu()
         elif self.page == -2:
             self.draw_change_code_menu()
+        elif self.page == 4:
+            self.draw_seizure_logs()
+        elif self.page == 5:
+            self.draw_seizure_log_viewer()
     
     def draw_main_menu(self):
         self.page = 0
@@ -47,7 +53,9 @@ class Oled:
             self.display.text(str(self.gps.time), 0, 0)
             self.display.text(str(self.gps.date), 0, 10)
         elif self.gps.time == None:
-            self.display.text("GPS offline", 0, 0)
+            self.display.text("GPS offline", 0, 0)        
+        self.display.text("View logs", 0, 30)
+        self.display.text("_", 115, 34)
         self.show()
         
     def draw_right_menu(self):
@@ -116,6 +124,64 @@ class Oled:
         self.accept_code()
         self.display.show()
         
+    def draw_seizure_logs(self):
+        self.page = 4
+        self.select = 0
+        self.lock = True
+        self.display.fill(0)
+        self.display.text("Enter MM:DD:YY: ", 0, 0)
+        self.display.text(self.code_in, 30, 30)
+        self.display.text("__:__:__", 30, 33)
+        self.display.show()
+        
+    def draw_seizure_log_viewer(self):
+        self.display.fill(0)
+        seizure_archive = self.logger.get_log_from_file(self.code_in).splitlines()
+        print(len(self.code_in))
+        print('sz', seizure_archive)
+        for i in range(self.select, len(seizure_archive)):
+            self.display.text(seizure_archive[i], 0, (i-self.select)*10)
+        self.show()
+            
+        
+
+    
+    def accept_date_in(self, input):
+        days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        if input in numpad and len(self.code_in) <= 6:
+            next_in = self.code_in + str(numpad[input])
+            if len(next_in) <= 2:
+                if int(next_in) <= 12:
+                    self.code_in = next_in
+                else:
+                    return
+            elif len(next_in) <= 4:
+                if int(next_in[:-2]) <= days[int(next_in[0:2])-1]:
+                    self.code_in = next_in
+                else:
+                    return
+            elif len(next_in) <= 6:
+                if next_in[4:6] <= self.gps.date.split("/")[2][2:4]:
+                    self.code_in = next_in
+                else:
+                    return
+        elif input == "0x00ff9867" and len(self.code_in) > 0:
+            self.code_in = self.code_in[:-1]
+        
+        if len(self.code_in) == 6:
+            self.code_in = self.code_in[0:2] + '/' + self.code_in[2:4] + '/' + self.code_in[4:6]
+            if '0' in self.code_in:
+                self.code_in = self.code_in.replace('0', '')
+            self.display.fill(0)
+            self.display.text("processing", 0, 0)
+            self.show()
+            time.sleep(2)
+            self.display.fill(0)
+            self.page = 5
+    
+        print(self.code_in)
+        self.redraw_menu()
+        
     def accept_code_in(self, input):
         
         if input in numpad and len(self.code_in) < 4:
@@ -137,6 +203,8 @@ class Oled:
 
 
         self.redraw_menu()
+        
+        
         
     def unlock_seizure_screen(self, input):
         print(input)
