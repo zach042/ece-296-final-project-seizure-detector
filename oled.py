@@ -43,7 +43,11 @@ class Oled:
     
     def draw_main_menu(self):
         self.page = 0
-        self.display.text("Time:", 0,0)
+        if self.gps.time:
+            self.display.text(str(self.gps.time), 0, 0)
+            self.display.text(str(self.gps.date), 0, 10)
+        elif self.gps.time == None:
+            self.display.text("GPS offline", 0, 0)
         self.show()
         
     def draw_right_menu(self):
@@ -82,9 +86,13 @@ class Oled:
         self.display.fill_rect(30, 10, 50, 64, 0)
         self.page = -1
         self.display.text("Settings", 0,0)
-        self.display.text("buzzer", 0,10)
-        self.display.text(str(self.buzzer.state), 55, 10)
+        if self.buzzer.state == True:
+            self.display.text("buzzer on", 0,10)
+        elif self.buzzer.state == False:
+            self.display.text("buzzer off", 0, 10)
         self.display.text("change code", 0,20)
+        self.display.text("_", 115, 13)
+        self.display.text("_", 115, 23)
         self.show()
         
     def draw_same_menu(self):
