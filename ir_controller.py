@@ -1,20 +1,42 @@
-import time
-from machine import Pin
-from ir_rx.nec import NEC_8
-from ir_rx.print_error import print_error
-import oled
-from pio_ir_rx import PIO_IR_NEC
-numpad = {"0x00ff6897": 0, "0x00ff30cf": 1, "0x00ff18e7": 2, "0x00ff7a85": 3, "0x00ff10ef": 4, "0x00ff38c7": 5, "0x00ff5aa5": 6, "0x00ff42bd": 7, "0x00ff4ab5": 8, "0x00ff52ad": 9}
-commands = {"page_right": "0x00ffc23d", "page_left": "0x00ff02fd", "sel_up": "0x00ffa857", "sel_down": "0x00ff906f", "enter": "0x00ff22dd", "exit": "0x00ffa25d", "delete": "0x00ff9867"}
+# ==========================================
+# Project: ECE 296 Seizure Detector
+# Author: Zach Teagarden
+# Date: May 10, 2026
+# Filename: ir_controller.py
+# Description: This file contains the IRController class, used to manage and command actions
+#              to the system and display given infrared controller input.
+#              multiple functions work together with the OLED display and other classes to
+#              efficiently and elegantly allow the user to disable / enable the buzzer,
+#              place the display in sleep mode, customize their device PIN, view previous seizures,
+#              and recalibrate the GPS.
+#              The functions within the IRController class largely serve as methods for the IR input to
+#              interface with the OLED display, but also work together with state variables from the OLED
+#              display such as 'page' to determine what to show the user given an IR input.
+# ==========================================
 
+import time #time is a necessary library, allowing for complex timers and sleep logic
+from machine import Pin #pin is required to initialize the device connection with the Pico W.
+from ir_rx.nec import NEC_8 #
+from ir_rx.print_error import print_error #
+import oled #
+from pio_ir_rx import PIO_IR_NEC
+import config #config contains the numpad and commands IR dictionaries
+
+numpad = config.numpad
+commands = config.commands
+
+"""
+IR
+"""
 class IRController:
     
-    def __init__(self, display):
+    def __init__(self, display, detector):
         self.display = display
         self.input = None
         self.input_received = False
         self.device = PIO_IR_NEC(pin=19)
         self.code = '1234'
+        self.detector = detector
         
 
     def await_input(self):
@@ -40,6 +62,7 @@ class IRController:
             self.display.display.fill_rect(0, 0, 110, 64, 0)
             self.display.draw_main_menu()
             self.display.show()
+            self.detector.seizing = False
             
             
     def exit_and_sleep_menus(self):
@@ -126,21 +149,6 @@ class IRController:
                     self.display.draw_refresh_gps()
                     
             self.display.redraw_menu()
-            
-    def unlock_seizure_screen(self):
-        print(self.input)
-        if self.input in numpad and len(self.display.code_in) < 4:
-            self.display.code_in += str(numpad[self.input])
-        elif self.input == commands["delete"] and len(self.display.code_in) > 0:
-            self.display.code_in = self.display.code_in[:-1]
-        if self.display.code_in == self.code:
-            self.display.lock = False
-            self.display.page = 0
-            self.display.display.fill(0)
-            self.display.code_in = ""
-        self.display.redraw_menu()
-        
-
 
     
     def reset(self):
