@@ -1,3 +1,13 @@
+# ==========================================
+# Project: ECE 296 Seizure Detector
+# Author: Zach Teagarden
+# Date: May 10, 2026
+# Filename: main.py
+# Description: This file collects every module which runs on core 1 / thread 0 into a single place,
+#              deploying a general stream of work on core 1, where xyz accelerometer data is aggregated
+#              into buffers and fed into a seizure detection module.
+#
+# ==========================================
 from imu import MPU6050
 from machine import I2C, Pin
 import time
@@ -52,6 +62,7 @@ oled.boot() #startup oled module
 detector = seizure_detector.SeizureDetector(oled, buzzer, logger) #seizure detector module
 ir_control = ir_controller.IRController(oled, detector) #infrared recieiver and control module
 
+while True:
 """
 This is the main loop where all of the code is tied together.
 The main loop runs on thread 0 with a maximum timeout of 20ms per cycle,
@@ -82,7 +93,7 @@ Once the loop is finished, the buffer index is incremented, such that every 20ms
 points are aggregated into the xyz buffers, maintaining a 50Hz sample rate.
 
 """
-while True:
+
     start = time.ticks_ms()
         
 #if buffer becomes full, reset its index to zero such that the buffer refills from zero
@@ -109,7 +120,7 @@ while True:
     if remaining > 0:
         time.sleep_ms(remaining)
     
-    #optional debug line ensures that cycle finishes within 20ms.
+    #optional debug line ensures that cycle finishes within 20ms becauause each loop must be 20ms in order to hit 50Hz target
     #print('time to cycle',time.ticks_ms() - start)
     
     

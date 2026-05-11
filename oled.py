@@ -27,11 +27,14 @@ import config
 i2c = I2C(1, sda=Pin(6), scl=Pin(7), freq=400000)
 dsp = SSD1306_I2C(128,64,i2c)
 
-numpad = config.numpad #config holds numpad dictionary
+#config holds numpad  / commands dictionaries
+numpad = config.numpad 
+commands = config.commands
 
 class Oled:
     
     """
+
     """
     def __init__(self, buzzer, gps, logger):
 #initialize necessary variables
@@ -245,27 +248,43 @@ class Oled:
     def draw_seizure_logs(self):
         """
         Draws input screen where user can select a date to see seizure records from that date.
-        Screen is locked, and the user's input is neatly displayed to them.
+        Screen is locked, and the user's input is neatly displayed to them, such that they may
+        delete or enter an alternate date.
+        
         Locking the display should mean the user is unable to navigate away from this page.
         """
-        self.page = 4
-        self.select = 0
-        self.lock = True
-        self.display.fill(0)
-        self.display.text("Enter MM:DD:YY: ", 0, 0)
-        self.display.text(self.code_in[0:2] + " " + self.code_in[2:4] + " " + self.code_in[4:6], 30, 30)
-        self.display.text("__:__:__", 30, 33)
-        self.display.show()
+        self.page = 4 #set page
+        self.select = 0 #reset select, as it is not necessary to this page
+        self.lock = True #lock screen
+        self.display.fill(0) #clear screen
+        self.display.text("Enter MM:DD:YY: ", 0, 0) #prompt input
+        self.display.text(self.code_in[0:2] + " " + self.code_in[2:4] + " " + self.code_in[4:6], 30, 30) #make input appear to fit well on screen
+        self.display.text("__:__:__", 30, 33) #input signifier
+        self.display.show() #draw 
         
     def draw_seizure_log_viewer(self):
-        self.display.fill(0)
+        """
+        Draws the menu where users can see the list of seizures for a given date, stored in a date.txt file, as outlined
+        in the seizure_logger.py file.
+        
+        Iniitially, the display is cleared, and remains locked from the prior draw_seizure_logs function, as this function
+        should be called following that function.
+        
+        A try / except clause runs such that if seizure data is found for an inputted date, that data is extracted from the
+        SeizureLogger module as a string and parsed / displayed neatly to the user in a scrollable vertical column.
+        
+        If the try / except fails and no seizures are found for a specific input date, the user is met with a 2 second transition screen
+        informing them no seizures were found for that date, returning them to the main menu.
+        """
+        self.display.fill(0) #clear
+#safely attempt to determine if a given input date has seizure logs
         try:
-            seizure_archive = self.logger.get_log_from_file(self.code_in).splitlines()
-            print(len(self.code_in))
-            print('sz', seizure_archive)
-            for i in range(self.select, len(seizure_archive)):
+            seizure_archive = self.logger.get_log_from_file(self.code_in).splitlines() #split input data
+    #for each seizure instance, draw it on its own line, using the current select value to scroll the entire aggregate up and down
+            for i in range(self.select, len(seizure_archive)): 
                 self.display.text(seizure_archive[i], 0, (i-self.select)*10)
-            self.show()
+            self.show() 
+    #if no data found, inform the user and return to the main menu.
         except:
             self.display.text("no seizures", 0, 0)
             self.display.text(f"on {self.code_in}", 0, 10)
@@ -283,30 +302,51 @@ class Oled:
 
     
     def accept_date_in(self, input):
-        days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        """
+        Allow the user to enter a date in MM DD YY format to search for seizure history for that given date.
+        Limits are placed on what the user is allowed to enter, notably, the days array aggregates the days of
+        each month from January to December, with the index of the array + 1 mapping 1:1 with each Month.
+        
+        The user is similarly not allowed to enter month values greter than twelve. The user is disallowed from
+        certain inputs, as invalid inputs are simply blocked and not populated to the display.
+        
+        Single-digit day/month values are required to be prepended by a 0 before the user enters that single-digit value.
+        
+        Once the user has entered a valid date input, the screen automatically changes, as the page changes to 5, the
+        menu where the user is able to either scroll through a list of past seizure isntances for that date, or they are met
+        with a screen informing them that there are no seizure occurences for this date.
+        """
+        
+        days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31] #days list, 0 = jan = 31 days, feb = 1 = 28 days, etc.
+#if user input is a valid numpad entry and the user input is less than its maximum input, check that input
         if input in numpad and len(self.code_in) <= 6:
             next_in = self.code_in + str(numpad[input])
+    #if input is in the month section, ensure it is less than 12
             if len(next_in) <= 2:
                 if int(next_in) <= 12:
                     self.code_in = next_in
                 else:
-                    return
+                    return # if input is invalid in the day range, return exits the loop, where external logic should re-call the loop starting from the top, this exit, essentially does nothing, informing the user that their input is invalid
+    #if input is is in the days section, ensure it's value is less than the maximum amount of days for that month
             elif len(next_in) <= 4:
+            #slice strings to determine validity
                 if int(next_in[:-2]) <= days[int(next_in[0:2])-1]:
                     self.code_in = next_in
                 else:
-                    return
+                    return #return to exit loop, demonstrates invalid input
+    #if input is in the year section, parse the input
             elif len(next_in) <= 6:
                 if next_in[4:6] <= self.gps.date.split("/")[2][2:4]:
                     self.code_in = next_in
                 else:
                     return
-        elif input == "0x00ff9867" and len(self.code_in) > 0:
+#if input is the delete button and there is a value to delete, then delete the last value.
+        elif input == commands["delete"] and len(self.code_in) > 0:
             self.code_in = self.code_in[:-1]
-        
+#if input is valid (max length), enter slashes such that it meets MM/DD/YY
         if len(self.code_in) == 6:
-            self.code_in = self.code_in[0:2] + '/' + self.code_in[2:4] + '/' + self.code_in[4:6]
-            print('it0', self.code_in)
+            self.code_in = self.code_in[0:2] + '/' + self.code_in[2:4] + '/' + self.code_in[4:6] #properly place input in MM/DD/YY format
+    #Remove the leading 0s from any single-digit days / months (cleaning the input for file writing / reading)
             if '/0' in self.code_in:
                 self.code_in = self.code_in.replace('/0', '/')
                 print('it1', self.code_in)
@@ -317,22 +357,39 @@ class Oled:
             self.display.fill(0)
             self.show()
             self.display.fill(0)
-            self.page = 5
+            self.page = 5 #move to page 5, the log viewer
     
-        print(self.code_in)
-        self.redraw_menu()
+        self.redraw_menu() #redraw at page 5
         
     def accept_code_in(self, input):
         
+        """
+        User may enter 4-digit code/pin when this function is called repeatedly.
+        
+        If the code buffer (self.code_in) receives a valid input, as long as its length is < 4,
+        append the input to the code input buffer.
+        
+        If the input is to delete, then don't append anything and simply delete the most recent entry so long as there
+        is something to delete.
+        
+        After input is received simply redraw the menu such that valid input can be drawn to the screen.
+        
+        This function operates almost identically to accept_date_in, except it is much simpler as it does not
+        require valid date checks.
+        """
+        
+#if input is valid and buffer has not been filled, append input to bufer
         if input in numpad and len(self.code_in) < 4:
             self.code_in += str(numpad[input])
-        elif input == "0x00ff9867" and len(self.code_in) > 0:
+#otherwise, if input is to delete, delete most recent input to the buffer
+        elif input == commands["delete"] and len(self.code_in) > 0:
             self.code_in = self.code_in[:-1]
+#if the max length of valid inputs has been reached, then replace the current code with the new code.
         if len(self.code_in) == 4:
             self.display.fill(0)
-            self.code = self.code_in
-            self.code_in = ""
-            self.display.text("code changed", 0, 0)
+            self.code = self.code_in #replacing old code
+            self.code_in = "" #refreshing buffer to zero, so that the next cycle works with a clean buffer
+            self.display.text("code changed", 0, 0) #notify user the code has been changed and return to main menu
             self.display.text("to: ", 0, 10)
             self.display.text(self.code, 0, 30)
             self.show()
@@ -347,10 +404,16 @@ class Oled:
         
         
     def unlock_seizure_screen(self, input):
+        """
+        Given an input, if that input is equal to the set code / PIN, unlock the seizure screen and return the user to the main menu.
+        """
+#if valid input, append to code buffer
         if input in numpad and len(self.code_in) < 4:
             self.code_in += str(numpad[input])
-        elif input == "0x00ff9867" and len(self.code_in) > 0:
+#if delete input, delete if vlaid
+        elif input == commands["delete"] and len(self.code_in) > 0:
             self.code_in = self.code_in[:-1]
+#if code is valid, unlock screen
         if self.code_in == self.code:
             self.lock = False
             self.page = 0
@@ -359,35 +422,60 @@ class Oled:
         self.redraw_menu()
         
 
-        
+
     def accept_code(self):
-        self.display.text("_ _ _ _", 0, 42)
-        self.display.text(" ".join(self.code_in), 0, 40)
+        """
+        Function used in places where a 4-digit code must be accepted, simply takes the code buffer and
+        places it overtop underscores denoting the input.
+        """
+        self.display.text("_ _ _ _", 0, 42) #placeholder values
+        self.display.text(" ".join(self.code_in), 0, 40) #buffer values
         
         
     def trigger_seizure_warning(self):
-        self.display.text("!!", 120, 50)
+        """
+        To be used within the SeizureDetecor class when a seizure warning must be issued.
+        Displays !! in the bottom right corner of the screen denoting a warning
+        """
+        self.display.text("!!", 120, 50) #display "!!"
         self.display.show()
     
     def show(self):
-        self.display.show()
+        """
+        Simplified version of self.display.show(), allows for easier calling from outside functions,
+        such that an outside function can simply can self.display.show() rather than self.display.display.show()
         
-    def unlock(self):
-        self.lock = False
-        self.code_in = ""
+        Also makes pushing to the display clearer within the Oled class, as a user can simply type self.show()
+        """
+        self.display.show() #show
+        
     
     def draw_select(self):
+        """
+        Draw select function draws the selector icon '*', moving its position in response to changes in the self.select value.
+        This function is expected to respond to changes in self.select made from the IRController class, as inputs there should
+        modify the self.select value, moving the selector icon up and down when that input is passed to this function.
+        
+        Safety checks prevent the icon from being drawn out of the screen's bounds.
+        
+        If the page changes, the select value is automatically reset, forcing the selector back to its default 0 position at
+        the top of the screen.
+        """
+#if sel is being told to go out of bounds prevent that
         if self.select <= 0 or self.select >= 5:
             self.select = 0
-        self.display.fill_rect(115, 0, 9, 64, 0)
+        self.display.fill_rect(115, 0, 9, 64, 0) #wipe only the select area of the screen on redraw
         if self.page_change == True:
             self.display.fill(0)
             self.select = 0
             self.page_change = False
-        self.display.text("*", 115, self.select * 11)
+        self.display.text("*", 115, self.select * 11) #draw * icon according to select value
         self.show()
         
     def boot(self):
+        """
+        Boot function draws the main menu
+        """
         self.draw_main_menu()
         self.show()
         
@@ -396,4 +484,5 @@ class Oled:
         
 
     
+
 
