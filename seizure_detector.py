@@ -3,7 +3,7 @@ import oled
 import _thread
 import time
 import buzzer
-
+import server
 class SeizureDetector:
     
     def __init__(self, display, buzzer, logger):
@@ -20,6 +20,8 @@ class SeizureDetector:
         self.safe_power = 0.0
         self.run_goertzel = False
         self.logger = logger
+        self.web_server = server.WebServer(self.display.gps, ssid="UHM", password="", port=80)
+        self.web_server.start()
         
         try:
             _thread.start_new_thread(self.core2_worker, ())
@@ -36,14 +38,16 @@ class SeizureDetector:
         self.run_goertzel = True
         
         if self.seizure_power != None:
-            if self.seizure_power >= 1000 and self.seizure_power / self.total_power >= 0.94:
+            if self.seizure_power >= 1000 and self.seizure_power / self.total_power >= 0.5:
                 self.seize_count += 1
                 print(self.seize_count)
                 
-                if self.seize_count >= 10:
+                if self.seize_count == 10:
+                    self.display.code_in = ""
                     self.display.draw_seizure_alert()
                     self.buzzer.trigger()
-                    self.logger.log_seizure_event(self.display.gps.date)
+                    self.logger.log_seizure_event()
+                    self.web_server.send_seizure_alert()
                     
                 if self.seize_count > 5 and self.seize_count < 10: #if seize count for > 10 seconds
                     self.display.trigger_seizure_warning()
@@ -57,14 +61,19 @@ class SeizureDetector:
     def core2_worker(self):
         while True:
             st = time.ticks_us()
-            if self.input_x != None and self.run_goertzel == True:
+            if self.run_goertzel != True:
+                self.web_server.update()
+            elif self.input_x != None and self.run_goertzel == True:
                 self.seizure_power = goertzel.three_axis_goertzel(self.input_x, self.input_y, self.input_z, [0,1,2,3,4,5])        
                 self.safe_power = goertzel.safe_three_axis_goertzel(self.input_x, self.input_y, self.input_z, [0,1,2])
                 self.total_power = self.seizure_power + self.safe_power
                 self.run_goertzel = False
+                print('time for goertzel: ', time.ticks_us() - st)
+
             
             self.buzzer.update()
-            #print('time for goertzel: ', time.ticks_us() - st)
+            
+
                 
 
             time.sleep_ms(100)

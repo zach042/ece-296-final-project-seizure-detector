@@ -82,7 +82,7 @@ def nec_rx_pio():
 class PIO_IR_NEC:
     REPEAT = -1
 
-    def __init__(self, pin=13, sm_id=4):
+    def __init__(self, pin=13, sm_id=0):
         self.ir_pin = Pin(pin, Pin.IN, Pin.PULL_UP)
         self.sm = StateMachine(
             sm_id,

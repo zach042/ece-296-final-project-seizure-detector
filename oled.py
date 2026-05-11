@@ -1,5 +1,6 @@
 from machine import Pin, I2C
 from ssd1306 import SSD1306_I2C
+#oled.py
 import time
 
 i2c = I2C(1, sda=Pin(6), scl=Pin(7), freq=400000)
@@ -15,6 +16,8 @@ class Oled:
         self.y_bottom = 63.0
         self.page = 0
         self.select = 0
+        self.timer = None
+        
         self.gps = gps
         self.logger = logger
         
@@ -48,14 +51,17 @@ class Oled:
             self.draw_seizure_log_viewer()
     
     def draw_main_menu(self):
+        self.timer = time.ticks_ms()
         self.page = 0
-        if self.gps.time:
-            self.display.text(str(self.gps.time), 0, 0)
-            self.display.text(str(self.gps.date), 0, 10)
-        elif self.gps.time == None:
+        if self.gps.time and self.gps.date:
+            self.display.text(self.gps.current_time(), 0, 0)
+            self.display.text(self.gps.current_date(), 0, 10)
+            self.display.text("View logs", 0, 30)
+            self.display.text("_", 115, 34)
+            print(self.gps.current_time())
+        elif self.gps.time == None or self.gps.date == None:
             self.display.text("GPS offline", 0, 0)        
-        self.display.text("View logs", 0, 30)
-        self.display.text("_", 115, 34)
+
         self.show()
         
     def draw_right_menu(self):
@@ -183,8 +189,14 @@ class Oled:
         
         if len(self.code_in) == 6:
             self.code_in = self.code_in[0:2] + '/' + self.code_in[2:4] + '/' + self.code_in[4:6]
-            if '0' in self.code_in:
-                self.code_in = self.code_in.replace('0', '')
+            print('it0', self.code_in)
+            if '/0' in self.code_in:
+                self.code_in = self.code_in.replace('/0', '/')
+                print('it1', self.code_in)
+            if self.code_in[0] == '0':
+                print('it2', self.code_in)
+                self.code_in = self.code_in[1:]
+                print('it3', self.code_in)
             self.display.fill(0)
             self.show()
             self.display.fill(0)

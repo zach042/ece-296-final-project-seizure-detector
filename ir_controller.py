@@ -28,26 +28,42 @@ class IRController:
             elif self.display.lock == True and self.display.page == 2:
                 self.display.unlock_seizure_screen(self.input)
             elif self.display.lock == True and self.display.page == -2:
-                self.exit_menu()
+                self.exit_and_sleep_menus()
                 self.display.accept_code_in(self.input)
             elif self.display.lock == True and self.display.page == 4:
-                self.exit_menu()
+                self.exit_and_sleep_menus()
                 self.display.accept_date_in(self.input)
             elif self.display.lock == True and self.display.page == 5:
-                self.exit_menu()
                 self.command_oled()
+        elif self.display.page == 0 and (time.ticks_ms() - self.display.timer) > 1000:
+            self.display.timer = time.ticks_ms()
+            self.display.display.fill_rect(0, 0, 110, 64, 0)
+            self.display.draw_main_menu()
+            self.display.show()
             
             
-    def exit_menu(self):
+    def exit_and_sleep_menus(self):
         if self.input == commands["exit"] and self.display.page in [-2, 4, 5]:
             print('EXITING')
             self.display.lock = False
             self.display.display.fill(0)
-            self.code_in = ""
             self.display.draw_main_menu()
+        elif self.input == commands["exit"] and self.display.page in [-1,0,1]:
+            self.display.display.fill(0)
+            self.display.display.text('entering sleep', 0, 0)
+            self.display.display.text('mode', 0, 10)
+            self.display.show()
+            time.sleep(2)
+            self.display.page = 6
+            self.display.display.fill(0)
+            self.display.show()
+        elif self.input == commands["exit"] and self.display.page == 6:
+            print('waking up')
+            self.display.page = 0
+            self.display.redraw_menu()
     
     def command_oled(self):
-        self.exit_menu()
+        self.exit_and_sleep_menus()
         print('page', self.display.page)
         if self.input == commands["page_left"]:
             self.display.page_change = True
@@ -88,7 +104,7 @@ class IRController:
             
         elif self.input == commands["enter"]:
             if self.display.page == 0:
-                if self.display.select == 3:
+                if self.display.select == 3 and self.display.gps.date and self.display.gps.time:
                     self.display.code_in = ""
                     self.display.page = 4
                     self.display.display.fill(0)

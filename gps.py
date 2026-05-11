@@ -58,6 +58,27 @@ class GPS:
                 print("failed")
                         
             time.sleep(0.1)
+            
+    def current_time(self):
+        t = self.rtc.datetime()
+        
+        if t:
+            hour = t[4]
+            minute = t[5]
+            return f"{hour:02d}:{minute:02d}"
+        else:
+            return None
+        
+    def current_date(self):
+        d = self.rtc.datetime()
+        
+        if d:
+            year = d[0]
+            month = d[1]
+            day = d[2]
+            return f"{month}/{day}/{year}"
+        else:
+            return None
 
         
 
