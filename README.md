@@ -29,6 +29,8 @@ The way in which the display is controlled is a particularly standout aspect of 
  - 1x short SunFounder Kit blue wire
  - some way to secure the Breadboard and components to the forearm, I used generic sticky velcro available at most craft stores.
 
+ ##Video demo
+
 ##Breadboard layout / wiring
 
 ##System Architecture Overview
@@ -44,7 +46,7 @@ The core 1 loop is better illustrated in []. Breaking down that logic into words
 
 Core 2:
 
-The loop which is exectued on the second core is generally far simpler than than core 1's loop, as it is generally only concerned with Goertzel analysis and running the server. This simplicity is necessary, as a Goertzel analysis often takes nearly half a second, while a serevr response a tenth of a second. Should either of theese have been implemented on the first core, the entire sampling logic and reliable data collection loop would fail to work entirely. 
+The loop which is executed on the second core is generally far simpler than than core 1's loop, as it is generally only concerned with Goertzel analysis and running the server. This simplicity is necessary, as a Goertzel analysis often takes nearly half a second, while a server response a tenth of a second. Should either of theese have been implemented on the first core, the entire sampling logic and reliable data collection loop would fail to work entirely. 
 
 The primary operation from this loop is as outlined in the flowchart and as follows: set an internal timer, although this is solely for debugging, then if the Goertzel flag is false, update the web server. If the flag is true, then run a Goertzel analysis, passing the values to the shared memory space class values within SeizureDetector, such that the aspects of the analyze() function which run on core 1 can properly determine whether a seizure has occured or not, and toggle devices initialized on core 1 accordingly. Then the buffer is updated at the end of the loop, and the loop cyccles back to the start. The timer may optionally be used to debug how long a Goertzel loop takes to ensure it fits within the 0.5 second required window. 
 
@@ -56,7 +58,7 @@ The first real challenge I actually solved with code was the seizure detection l
 
 Before I could even think about isolating frequencies, I had to consider how I would collect XYZ data. I decided that I would keep track of a list of values, and set my sights on a 50Hz sample rate, as I knew that in order to analyze a frequency, you must have sampled at double that frequency from ECE 260. I decided to store 10 seconds of 50Hz data, but really wasn't sure what the best way to do this on a microcontroller was considering its limited power and memory. Initially I used a list, but learned that the array module was much more efficient for this purpose, and decided to use that instead. I then drafted a simple xyz buffer solution where a while True loop continuosuly recoreded the XYZ accelerometer data in their own respective buffers.
 
-The next real challenge I had to work through was figuring out what method I should use to isolate the strength of Seizure band frequencies. This first requried me to research what frequencies are generally considerede to be within the seizure band and which frequencies are not. I had to look through multiple reseaerch papers, and often got confused if the researchers were discussing ECG frequency or accelerometer frequency. Anyone attempting to recreate this project and reserach on their own time should ensure they too make this distinction while researching. I learned largely through YouTube videos that a primary way computer isolate frequencies is with a Full Fourier Transform, where all frequencies within a noisy signal are isolated and assigned strength values. I did more research and learned about Discrete Fourier Transforms, particularly, the Goertzel DFT, a commonly used Fourier Transform which allows one to isolate only a select batch of desired frequency strengths. I decided this was the perfect method because it would allow the Pico to analyze frequency strengths efficiently without having to spend time analyzing frequencies I was unconcerned with. 
+The next real challenge I had to work through was figuring out what method I should use to isolate the strength of Seizure band frequencies. This first requried me to research what frequencies are generally considerede to be within the seizure band and which frequencies are not. I had to look through multiple reseaerch papers, and often got confused if the researchers were discussing ECG frequency or accelerometer frequency. Anyone attempting to recreate this project and reseaerch on their own time should ensure they too make this distinction while researching. I learned largely through YouTube videos that a primary way computer isolate frequencies is with a Full Fourier Transform, where all frequencies within a noisy signal are isolated and assigned strength values. I did more research and learned about Discrete Fourier Transforms, particularly, the Goertzel DFT, a commonly used Fourier Transform which allows one to isolate only a select batch of desired frequency strengths. I decided this was the perfect method because it would allow the Pico to analyze frequency strengths efficiently without having to spend time analyzing frequencies I was unconcerned with. 
 
 Implementing the Goertzel algorithm in code was actually quite difficult, as the online resources were slimmer than I had expected. I based my initial iteration on the example listed on Wikipedia, and it appeared to work well enough, but was very slow, as I had started out running three seperate Goertzel equations, as I originally thought I needed to use one per axis. As I had tested an implementation of a multi frequency Goertzel, I learned that my implementation was simply too slow to analyze 3 seperate axes at once by Goertzel over multiple frequencies. In the process of reaching this point I had also solved many other minor issues such as whether or not I needed to use a circular buffer for frequency analysis and how I can better optimize the Goertzel algorithm generally.
 
@@ -68,12 +70,45 @@ While I had been working out the issues with the Goertzel analysis, I also had t
 
 Using Paul McWhorter's videos as a reference, I got started on an implementation of the IR controller to actually allow the user to interact with the OLED display, as in its current state, the OLED display did nothing meaningful. I think at this point I had a working seizure alarm on the screen, but I needed the user to interface with the display. 
 
-Setting up IR control was potentially the most difficult task of this entire project, as I started using Paul McWhorter's tutorials as a reference, but found the library he was using confusing and error prone. Repeatedly, 
+Setting up IR control was potentially the most difficult task of this entire project, as I started using Paul McWhorter's tutorials as a reference, but found the library he was using confusing and error prone. Repeatedly, errors woul throw uring extremely simple operations, and it became abundantly clear that the default module was fundamentally incompatible with my timed 20 second loops. I could have offloaded the logic to core 2, but I was already pushing that core to its limits with Goertzel and would miss many inputs moving both instances there. I got permission from Mr. Sasaki to use AI to help me solve this problem an dhad AI assist me in writing assembly code, wrapping it in a class to constantly chceck input using one of the Pico's on board state machines. This became my pio_ir_rx.py file and PIO_IR_NEC class. I struggled to initially understand how to implement this, but quickly got up to speed after learning some basic assembly principles and testing the AI generated code. This was still a significant challenge though, as I had to really spend time wrapping my head around the entirely foreign concept of assembly and how it was able to process inputs while both cores were in use.
+
+Following that truly challenging implementation, I had rudamentary OLED display control working.
+
+The Buzzer implementation was quite straightforward, as was setting up more basic OLED interfacing.
+
+The next major challenge I encountered was setting up the GPS. I had to get help soldering pins and used Paul McWhorter's online tutorials to interface with the GPS. This required learning about the whole paradigm of how GPS even works, largely through Paul's videos, as well as understanding what the outputs of GPS to the Pico W mean. I spent significant time iterating upon and improving my logic for capturing GPS data, largely through trial and error, printing GPS values to the console.
+
+At this point, my project was very close to being complete, but I still had significant progress to make with the IR control of the display and what the display could show. While implementing the general logic for a security PIN, sleep mode, GPS activation, and log viewer / recorder was all actually very straightforward, I encoutnered significant error stemming from the complexity and scale to which my program had grown to. At this point many modules interacted with one anohter, and changing one aspect of a single module often broke features in another, often requiring me to read through files over and over until I had their functions memorized. Working about the complexity I had incurred while still delivering new features and solutions was the real final challenge. 
 
 ##What I Learned
 
+I learned many things throughout my work on this project. One of the most important things I learned is that it is always best to be extremely careful when redesigning circuit layouts and wiring on breadboards. I spent hours attempting to make my components fit toegether as neatly as possible, frying two IR sensors in the process and almost destroying other components as there were multiple instances where I had forgot to properly wire things like the GPS module and buzzer following a redesign. Luckily, the devices weren't placed in an orientation that would have caused harm to the components, but the fact that there were multiple wiring mistakes on my part really opened my eyes to my own forgetfulness when working with complex systems. I also learned that being as focuesd as possible helps, as I would occasionally work while around my girlfriend, and would repeatedly make mistakes when chatting with her while working. 
 
+I also learned how important it is to plan systems before you implement them. This is something I learned in high school programming classes, and through work on my own personal projects, but, working in an object-oriented language has made me understand just how important this is. I learned that many design decisions I made early on I became stuck with unless I decided to heavily refactor, as my class instances frequently overlapped and relied on eachother for their own behavior to properly function. I learned that sketching out a basic flow chart or even something as small as going in with a clear mental plan can make an extraordinary difference when working across multiple embedded and complex files. The amount of design mistakes I made which required correcting and small logical errors often grew and would frequently require me to rethink my overall system layout before ammending my mistake and continuing working. 
 
+Through this project, my understanding of the importance of performance driven design principles grew significantly. Through my days of work figuring out how to optimize and set up the Goertzel algorithm, I not only learned some of the best practices for performance in Micropython, but why these practices are so important. I learned that it is always important to group performance intensive activities when possible, and that reducing for loops is almost always a plus. Precomputation can save large algorithms, and make them run very quickly on small devices like the Pico. Furthermore, I was able to learn that simplicity is often a sacrifice made for performance, but it can be a necessary sacrifice that greatly improves your ability to optimize other problems. I think it is often that on modern computers, optimization is considered, but not to the extent it needs to be on limited hardware like the Pico. I really feel much more confident in my ability to optimize my code better on microcontrollers in the future as well as on large projects on powerful computers. 
+
+Beyoond this, I feel I have really gained a better understanding as to how tiny embedded systems work. Having to think through my own use cases, consider the limitations of my hardware, and fulfill my ambitions given the constraints, I found myself often questioning just how the Pico itself was desgined or the GPS module. I feel that I have learned just how complex these systems really are.
+
+In terms of what I laerned technically, I will list those below, as there are too many to possibly discuss in paragraph form:
+ - Micropython array vs list, how to use array and why to use it
+ - How frequency analysis is done mathematically and computationally
+ - How to interface with a microcontroller's state machine using Assembly
+ - Basic Assembly programming and how to wrap functionality in a Micropython class
+ - How to design and improve large OOP-based projects where classes often interface with eachother
+ - How to design a class to represent an onboard device
+ - How to use _thread to allocate complex work to the second core
+ - The _ naming convention for private functions
+ - What sockets are and how they work in Micropython for networking
+ - How to set up a server and ensure steady operation using FSM architecture
+ - Using the os library to interface with files on the Pico
+ - Proper docstring and commenting conventions
+ - Navigating complex input / display logic and decision trees given repeatedly refreshing inputs
+ - GPS math, conventions, and interfacing over Micropython
+ - NEC
+ - quality code > quantity code
+ - methods for creating decision trees when case / switch statements are unavailable
+ - The importance of using local class variables in other classes to effectively reduce the amount of variables
 
 
 
