@@ -1,8 +1,30 @@
+# ==========================================
+# Project: ECE 296 Seizure Detector
+# Author: Zach Teagarden
+# Date: May 10, 2026
+# Filename: pio_ir_rx.py
+# Description: This file implements a custom NEC IR Protocol using the Pico W's PIO State Machines.
+#              Functionally what this means is that constant signal detection is offloaded from both
+#              Pico W cores, meaning that at any instant, the cores can be working on their own tasks
+#              while one of the onboard FSM's handles IR input. This is a superior design largely because
+#              it allows for perfect, non-blocking IR interface with the project. Alternative solutions
+#              often require the Pi to actively listen for an IR input on the main thread, interrupting
+#              every other aspect of the project. In essence, the IR reception does not interfere with
+#              the primary seizure detection loop or the secondary core Goertzel analysis and server process.
+#
+#              To achieve this custom FSM NEC process, assembly code was required to be written rather than
+#              Micropython, as it would be impossible to program the onboard FSM to this extent using
+#              Micropython.
+#
+#              The NEC uses what is known as 'pulse-distance' encoding, where a leader bit predates data bits, while
+#              the data bits themselves are encoded by the length of the space preceeding the data / after the burst.
+#              The state machine measures the length of pulses using hardware timers / x / y registers.
+# ==========================================
 
-
-import rp2
-from rp2 import PIO, StateMachine
-from machine import Pin
+#necessary imports
+import rp2 #module for dealng with the PIO hardware
+from rp2 import PIO, StateMachine #necessary for FSM logic with PIO hardware
+from machine import Pin 
 
 #writing an ASM function, not micropython
 @rp2.asm_pio(
@@ -12,6 +34,13 @@ from machine import Pin
     fifo_join=PIO.JOIN_RX,
 )
 def nec_rx_pio():
+    """
+    This function runs on the onboard FSM, waiting for a specific pattern to be recieved from the IR sensor.
+    A 32 bit value is constructed in the input shift register.
+    
+    This function will wait for a start burst, if it recieves that, then measure the high signal, looping 32 times to masure
+    individual bits, and then push the final 32-bit value.
+    """
     # --- Wait for leader burst (pin goes LOW for a long time) ---
     wrap_target()
 
@@ -20,7 +49,7 @@ def nec_rx_pio():
     # state machine is set to wait until pin goes to low
     wait(0, pin, 0)
 
-    #logic to see if a pin was high long enough
+    #logic to see if a pin was high long enough - functionally a timer to verify if it was 9ms
     set(x, 29) # x starts at 29, coutning down to 0 over 240 ticks (5ms)
     label("count_burst")
     jmp(pin, "reset") # if pin goes high before the counter runs out, reset
@@ -80,9 +109,19 @@ def nec_rx_pio():
 
 
 class PIO_IR_NEC:
-    REPEAT = -1
+    """
+    The PIO_IR_NEC class is basically just a Python implementation of the NEC state machine. The class
+    handles the intiitalization of the onboard hardware, and provides methods to get the decoded commands.
+    
+    Repaet is a constant used to identify repeating signals.
+    """
+    
+    REPEAT = -1 #identify repeating signals
 
     def __init__(self, pin=13, sm_id=0):
+        """
+        Initializes the state machine on 
+        """
         self.ir_pin = Pin(pin, Pin.IN, Pin.PULL_UP)
         self.sm = StateMachine(
             sm_id,
@@ -149,3 +188,5 @@ class PIO_IR_NEC:
             result = (result << 1) | (val & 1)
             val >>= 1
         return result
+
+

@@ -1,7 +1,7 @@
 # ==========================================
 # Project: ECE 296 Seizure Detector
 # Author: Zach Teagarden
-# Date: May 10, 2026
+# Date: May 11, 2026
 # Filename: main.py
 # Description: This file collects every module which runs on core 1 / thread 0 into a single place,
 #              deploying a general stream of work on core 1, where xyz accelerometer data is aggregated

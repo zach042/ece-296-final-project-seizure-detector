@@ -1,7 +1,7 @@
 # ==========================================
 # Project: ECE 296 Seizure Detector
 # Author: Zach Teagarden
-# Date: May 10, 2026
+# Date: May 11, 2026
 # Filename: seizure_detector.py
 # Description: Using the continuous stream of xyz buffer accelerometer data and the goertzel algorithms,
 #              seizure_detector.py merges all of this logic into a single class for determining
@@ -73,7 +73,7 @@ class SeizureDetector:
         self.display = display #oled display
         self.buzzer = buzzer #buzzer
         self.logger = logger #seizure_logger
-        self.web_server = server.WebServer(self.display.gps, self, ssid="UHM", password="", port=80) #web server instantiation
+        self.web_server = server.WebServer(self.display.gps, self) #web server instantiation
         self.web_server.start() #start web server
 #safely attempt to begin a new thread
         try:

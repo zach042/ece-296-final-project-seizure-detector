@@ -204,7 +204,7 @@ class IRController:
     #if on settings / left page and selector is 1, allow user to toggle buzzer
             elif self.display.page == -1:
                 if self.display.select == 1:
-                    self.display.buzzer.state = not self.display.buzzer.state
+                    self.display.buzzer.is_active = not self.display.buzzer.is_active
         #if on settings and selector is 2, toggle change code menu
                 elif self.display.select == 2:
                     self.display.code_in = ""

@@ -30,6 +30,7 @@ dsp = SSD1306_I2C(128,64,i2c)
 #config holds numpad  / commands dictionaries
 numpad = config.numpad 
 commands = config.commands
+days = config.days
 
 class Oled:
     
@@ -164,9 +165,9 @@ class Oled:
         self.page = -1 #set page to -1
         self.display.text("Settings", 0,0) #show title
 #show buzzer state to user depending on the Buzzer class instance's inherent state
-        if self.buzzer.state == True:
+        if self.buzzer.is_active == True:
             self.display.text("buzzer on", 0,10)
-        elif self.buzzer.state == False:
+        elif self.buzzer.is_active == False:
             self.display.text("buzzer off", 0, 10)
 #provide user the option to change their security PIN
         self.display.text("change code", 0,20)
@@ -317,7 +318,6 @@ class Oled:
         with a screen informing them that there are no seizure occurences for this date.
         """
         
-        days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31] #days list, 0 = jan = 31 days, feb = 1 = 28 days, etc.
 #if user input is a valid numpad entry and the user input is less than its maximum input, check that input
         if input in numpad and len(self.code_in) <= 6:
             next_in = self.code_in + str(numpad[input])
