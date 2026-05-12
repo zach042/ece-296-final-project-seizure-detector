@@ -63,36 +63,36 @@ detector = seizure_detector.SeizureDetector(oled, buzzer, logger) #seizure detec
 ir_control = ir_controller.IRController(oled, detector) #infrared recieiver and control module
 
 while True:
-"""
-This is the main loop where all of the code is tied together.
-The main loop runs on thread 0 with a maximum timeout of 20ms per cycle,
-such that buffer values are resampled every 20ms, meeting the 50Hz rating.
+    """
+    This is the main loop where all of the code is tied together.
+    The main loop runs on thread 0 with a maximum timeout of 20ms per cycle,
+    such that buffer values are resampled every 20ms, meeting the 50Hz rating.
 
-Every cycle, the buffer index is reset if the xyz buffers are full. Otherwise,
-new data is inserted into the xyz buffers at the current value of the buffer index.
+    Every cycle, the buffer index is reset if the xyz buffers are full. Otherwise,
+    new data is inserted into the xyz buffers at the current value of the buffer index.
 
-This loop spawns an onboard SFM to await IR input as well, such that input is non-blocking, but
-such that input received is also passed to functions. This input data is what allows the user
-to control the rest of the device, and as every module has been pre-initialized,
-when the user enters input into the system, it is automatically handled by the
-ir_controller mdoule, which extends changes in behavior to the display, GPS, and buzzer.
-This logic is all obscured away into the other modules for brevity within the main loop, but
-it is important to make the distinction that the main loop is fundamentally what facilitates the input
-into the ir_controller, allowing for this behavior, and that any behavior which the ir_controller
-influences runs on thread 0 apart from the web server and Goertzel analyses, which are almost entirely
-facilitated by seperate processes on thread 1. This is managed safely though, as thread 0 passes data
-to shared memory with thread 1 in the SeizureDetector class.
+    This loop spawns an onboard SFM to await IR input as well, such that input is non-blocking, but
+    such that input received is also passed to functions. This input data is what allows the user
+    to control the rest of the device, and as every module has been pre-initialized,
+    when the user enters input into the system, it is automatically handled by the
+    ir_controller mdoule, which extends changes in behavior to the display, GPS, and buzzer.
+    This logic is all obscured away into the other modules for brevity within the main loop, but
+    it is important to make the distinction that the main loop is fundamentally what facilitates the input
+    into the ir_controller, allowing for this behavior, and that any behavior which the ir_controller
+    influences runs on thread 0 apart from the web server and Goertzel analyses, which are almost entirely
+    facilitated by seperate processes on thread 1. This is managed safely though, as thread 0 passes data
+    to shared memory with thread 1 in the SeizureDetector class.
 
-Every half second, a goertzel analysis is demanded, forcing the detector to command
-thread 1 to perform a Goertzel analysis every half second.
+    Every half second, a goertzel analysis is demanded, forcing the detector to command
+    thread 1 to perform a Goertzel analysis every half second.
 
-In order to maintain a steady 20ms cycle time, a timed sleep pauses the cycle if it finishes
-before 20ms.
+    In order to maintain a steady 20ms cycle time, a timed sleep pauses the cycle if it finishes
+    before 20ms.
 
-Once the loop is finished, the buffer index is incremented, such that every 20ms singular new data
-points are aggregated into the xyz buffers, maintaining a 50Hz sample rate.
+    Once the loop is finished, the buffer index is incremented, such that every 20ms singular new data
+    points are aggregated into the xyz buffers, maintaining a 50Hz sample rate.
 
-"""
+    """
 
     start = time.ticks_ms()
         
