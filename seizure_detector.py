@@ -98,7 +98,7 @@ class SeizureDetector:
         
 #if seizure_power is very large and overrepresented, flag it
         if self.seizure_power != None:
-            if self.seizure_power >= 1000 and self.seizure_power / self.total_power >= 0.5:
+            if self.seizure_power >= 1000 and self.seizure_power / self.total_power >= 0.90:
                 self.seize_count += 1
                 print(self.seize_count)
                 
@@ -146,12 +146,15 @@ class SeizureDetector:
             st = time.ticks_us()
             if self.run_goertzel != True:
                 self.web_server.update()
+                if self.web_server.state not in ["idle"] and self.display.ip in [None, "0.0.0.0"]:
+                    self.display.ip = f"{self.web_server.wlan.ifconfig()[0]}"
+                    print(f"ip: {self.web_server.wlan.ifconfig()[0]}")
             elif self.input_x != None and self.run_goertzel == True:
                 self.seizure_power = goertzel.three_axis_goertzel(self.input_x, self.input_y, self.input_z, [0,1,2,3,4,5])        
                 self.safe_power = goertzel.safe_three_axis_goertzel(self.input_x, self.input_y, self.input_z, [0,1,2])
                 self.total_power = self.seizure_power + self.safe_power
                 self.run_goertzel = False
-                print('time for goertzel: ', time.ticks_us() - st)
+                #debug line print('time for goertzel: ', time.ticks_us() - st)
             else:
                 time.sleep_ms(100)
             self.buzzer.update()

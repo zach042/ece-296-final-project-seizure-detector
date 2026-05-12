@@ -50,6 +50,7 @@ class Oled:
         self.code_in = "" #code buffer begins blank
         self.code = config.code #config holds initial security code
         self.timer = None
+        self.ip = None
         
 #initialize modules
         self.gps = gps
@@ -114,7 +115,10 @@ class Oled:
             print(self.gps.current_time())
 #if gps does not have time/date, notify user GPS is offline
         elif self.gps.time == None or self.gps.date == None:
-            self.display.text("GPS offline", 0, 0)        
+            self.display.text("GPS offline", 0, 0)
+        if self.ip:
+            self.display.text("ip: ", 0, 40)
+            self.display.text(self.ip, 0, 50)
 #show either option
         self.show()
         

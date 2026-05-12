@@ -157,11 +157,13 @@ class GPS:
                                         corrected_year = year + 1
                                         
                                 #set real time clock datetime
+                                self.time = f"{corrected_hour}:{corrected_minute}"
+                                self.date = f"{corrected_month}/{corrected_day}/{corrected_year}"
                                 self.rtc.datetime((corrected_year, corrected_month, corrected_day, 1, corrected_hour, corrected_minute, second, 0))
             except:
                 #if there is an error parsing a line, loop back o start of for loop
                 print("failed")
-                        
+                
             time.sleep(0.1)
             
         

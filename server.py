@@ -57,6 +57,7 @@ class WebServer:
         self.client_sock = None
         self.client_buffer = ""
         self.response_data = b""
+        self.wifi_retries = 0
         
         """
         Initializes the instance of the WebServer class, accepting in
@@ -76,8 +77,16 @@ class WebServer:
         if not self.wlan.isconnected():
             if not self.wlan.active():
                 self.wlan.active(True)
-            self.wlan.connect(self.ssid, self.password) 
-            self.state = states["connecting"] #set the state to connecting to indicate connection is initializing
+                time.sleep(1)
+            try:
+                self.wlan.disconnect()
+            except:
+                pass
+            time.sleep_ms(100)
+            self.wlan.connect(self.ssid, self.password)
+            self.connect_start_ticks = time.ticks_ms()
+            self.state = states["connecting"]
+            #set the state to connecting to indicate connection is initializing
     #otherwise, if the device is idle or connecting, bind the socket 
         else:
             if self.state == states["idle"] or self.state == states["connecting"]:
@@ -114,11 +123,27 @@ class WebServer:
         """
         
         # check connected
+# replace the connecting block in update()
         if self.state == states["connecting"]:
             if self.wlan.isconnected():
+                print("WiFi connected")
                 self.start()
+            elif time.ticks_diff(time.ticks_ms(), self.connect_start_ticks) > 15000:
+                self.wifi_retries += 1
+                print(f"WiFi timeout (attempt {self.wifi_retries}/{MAX_WIFI_RETRIES})")
+                if self.wifi_retries >= 5:
+                    print("WiFi: max retries reached, going idle")
+                    self.state = states["idle"]
+                else:
+                    try:
+                        self.wlan.disconnect()
+                    except:
+                        pass
+                    self.wlan.active(False)
+                    time.sleep(1)
+                    self.state = states["idle"]
+                    self.start()
             return
-        
         # accept conn
         if self.state == states["listening"]:
             try:
@@ -206,7 +231,6 @@ class WebServer:
 <body>
 <h1>Seizure Detection System</h1>
 <p>Status: Having seizure?: {self.sd.seizing}</p>
-<p>Last Seizure Count: count?</p>
 <p>GPS Lat: {self.gps.lat}</p>
 <p>GPS Lon: {self.gps.lon}</p>
 </body>
