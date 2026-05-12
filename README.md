@@ -31,7 +31,7 @@ The way in which the display is controlled is a particularly standout aspect of 
  - SunFounder Kit Batter and Battery Holder
 
  ##Video demo
- [Link text](https://www.youtube.com/watch?v=sAgPejwyLyU)
+ [Youtuve Video Demonstration](https://www.youtube.com/watch?v=sAgPejwyLyU)
 
 ##Breadboard layout / wiring / circuit diagrams
 Attached are three unique images of the project's wiring layout such that any person wishing to understand or recreate the project may do so easily given the way in which multiple photos reveal each connection between pins.
@@ -120,7 +120,12 @@ In terms of what I laerned technically, I will list those below, as there are to
  - The importance of using local class variables in other classes to effectively reduce the amount of variables
 
 
-
+##Resume Description:
+#ECE-206 Seizure Detector
+ - Designed and developed a working prototype for a device which detects seizures using a Goertzel Fourier Transform applied to 10 seconds of xyz accelerometer data sampled at 50 Hz.
+ - Developed a complex UI interfaced via an IR remote control system using assembly to constantly listen for new inputs with the Pico W’s onboard state machine.
+ - Used multi-core programming with the _thread module.
+ - Integrated a GPS module for time, date, location, as well as push notifications to iPhone and a local http stateful server.
 
 
 
