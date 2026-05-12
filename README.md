@@ -32,7 +32,13 @@ The way in which the display is controlled is a particularly standout aspect of 
 
  ##Video demo
 
-##Breadboard layout / wiring
+##Breadboard layout / wiring / circuit diagrams
+Attached are three unique images of the project's wiring layout such that any person wishing to understand or recreate the project may do so easily given the way in which multiple photos reveal each connection between pins.
+![Alt text](/images/circuit-diagrams/everything-connected.png)
+![Alt text](/images/circuit-diagrams/modules-removed.png)
+![Alt text](/images/circuit-diagrams/nothing-connected.png)
+
+
 
 ##System Architecture Overview
 
