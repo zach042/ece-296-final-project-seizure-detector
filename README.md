@@ -31,6 +31,7 @@ The way in which the display is controlled is a particularly standout aspect of 
  - SunFounder Kit Batter and Battery Holder
 
  ##Video demo
+ ![Alt text](https://www.youtube.com/watch?v=sAgPejwyLyU)
 
 ##Breadboard layout / wiring / circuit diagrams
 Attached are three unique images of the project's wiring layout such that any person wishing to understand or recreate the project may do so easily given the way in which multiple photos reveal each connection between pins.
